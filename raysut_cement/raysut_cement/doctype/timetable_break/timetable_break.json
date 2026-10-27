@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "break_timetable",
+  "break_type",
+  "break_start",
+  "break_end",
+  "break_duration_minutes"
+ ],
+ "fields": [
+  {
+   "fieldname": "break_timetable",
+   "fieldtype": "Link",
+   "label": "Break Timetable",
+   "options": "Break Timetable",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "break_type",
+   "fieldtype": "Data",
+   "label": "Type",
+   "fetch_from": "break_timetable.break_type",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "break_start",
+   "fieldtype": "Time",
+   "label": "Start",
+   "fetch_from": "break_timetable.break_start",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "break_end",
+   "fieldtype": "Time",
+   "label": "End",
+   "fetch_from": "break_timetable.break_end",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "break_duration_minutes",
+   "fieldtype": "Int",
+   "label": "Minutes",
+   "fetch_from": "break_timetable.break_duration_minutes",
+   "read_only": 1,
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "Timetable Break",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

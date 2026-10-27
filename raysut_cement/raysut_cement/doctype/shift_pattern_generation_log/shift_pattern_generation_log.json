@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "date",
+  "reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "in_list_view": 1,
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "Shift Pattern Generation Log",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}

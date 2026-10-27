@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "cycle_index",
+  "day_key",
+  "timetable",
+  "sequence"
+ ],
+ "fields": [
+  {
+   "fieldname": "cycle_index",
+   "fieldtype": "Int",
+   "label": "Cycle Index",
+   "in_list_view": 1,
+   "description": "Week, day or month number within the cycle"
+  },
+  {
+   "fieldname": "day_key",
+   "fieldtype": "Data",
+   "label": "Day",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "timetable",
+   "fieldtype": "Link",
+   "label": "Timetable",
+   "options": "Shift Type",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence",
+   "in_list_view": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "Shift Pattern Day",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1
+}

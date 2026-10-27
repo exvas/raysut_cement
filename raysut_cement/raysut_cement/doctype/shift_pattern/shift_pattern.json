@@ -1,0 +1,157 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_information_section",
+  "pattern_name",
+  "copy_from",
+  "column_break_basic",
+  "description",
+  "repetition_section",
+  "repeat_mode",
+  "repeat_every",
+  "column_break_repeat",
+  "week_starts_on",
+  "shift_grid_section",
+  "shift_grid",
+  "palette_timetables",
+  "days"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_information_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Information"
+  },
+  {
+   "fieldname": "pattern_name",
+   "fieldtype": "Data",
+   "label": "Shift Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "copy_from",
+   "fieldtype": "Link",
+   "label": "Copy From",
+   "options": "Shift Pattern",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_basic",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "repetition_section",
+   "fieldtype": "Section Break",
+   "label": "Repetition Configuration"
+  },
+  {
+   "fieldname": "repeat_mode",
+   "fieldtype": "Select",
+   "label": "Repeat By",
+   "options": "Week\nDay\nMonth",
+   "default": "Week",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "repeat_every",
+   "fieldtype": "Int",
+   "label": "Repeat Every",
+   "default": "1",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Week: 1-4 weeks. Day: 1-31 days. Month: 1-3 months."
+  },
+  {
+   "fieldname": "column_break_repeat",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "week_starts_on",
+   "fieldtype": "Select",
+   "label": "Week Starts On",
+   "options": "Sunday\nMonday\nSaturday",
+   "default": "Sunday",
+   "depends_on": "eval:doc.repeat_mode==\"Week\""
+  },
+  {
+   "fieldname": "shift_grid_section",
+   "fieldtype": "Section Break",
+   "label": "Shift"
+  },
+  {
+   "fieldname": "shift_grid",
+   "fieldtype": "HTML",
+   "label": "Shift Grid"
+  },
+  {
+   "fieldname": "palette_timetables",
+   "fieldtype": "Small Text",
+   "label": "Palette Timetables",
+   "hidden": 1,
+   "no_copy": 0
+  },
+  {
+   "fieldname": "days",
+   "fieldtype": "Table",
+   "label": "Days",
+   "options": "Shift Pattern Day",
+   "hidden": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "Shift Pattern",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "field:pattern_name",
+ "naming_rule": "By fieldname",
+ "title_field": "pattern_name",
+ "track_changes": 1
+}

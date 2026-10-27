@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-01-07 17:52:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "configuration_name",
+  "api_url",
+  "api_key",
+  "api_secret",
+  "test_connection",
+  "sync_now",
+  "column_break_1",
+  "token",
+  "token_expires",
+  "connection_status",
+  "last_token_generated",
+  "last_sync_time",
+  "last_sync_status"
+ ],
+ "fields": [
+  {
+   "fieldname": "configuration_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Configuration Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "api_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "API URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "API Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "api_secret",
+   "fieldtype": "Password",
+   "label": "API Secret",
+   "reqd": 1
+  },
+  {
+   "fieldname": "test_connection",
+   "fieldtype": "Button",
+   "in_list_view": 1,
+   "label": "Test Connection"
+  },
+  {
+   "fieldname": "sync_now",
+   "fieldtype": "Button",
+   "in_list_view": 1,
+   "label": "Sync Now"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "token",
+   "fieldtype": "Password",
+   "label": "Access Token",
+   "read_only": 1
+  },
+  {
+   "fieldname": "token_expires",
+   "fieldtype": "Datetime",
+   "label": "Token Expires",
+   "read_only": 1
+  },
+  {
+   "fieldname": "connection_status",
+   "fieldtype": "Select",
+   "label": "Connection Status",
+   "options": "Not Tested\nConnected\nDisconnected\nError",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_token_generated",
+   "fieldtype": "Datetime",
+   "label": "Last Token Generated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_sync_time",
+   "fieldtype": "Datetime",
+   "label": "Last Sync Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_sync_status",
+   "fieldtype": "Small Text",
+   "label": "Last Sync Status",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "CrossChex API Configuration",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,255 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "shift_pattern",
+  "company",
+  "status",
+  "column_break_main",
+  "start_date",
+  "end_date",
+  "generation_horizon_days",
+  "assign_section",
+  "assign_to",
+  "column_break_assign",
+  "employee",
+  "department",
+  "branch",
+  "designation",
+  "employee_group",
+  "employees_section",
+  "employees",
+  "log_section",
+  "last_generated_on",
+  "generation_log",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SPA-.YYYY.-",
+   "default": "SPA-.YYYY.-",
+   "hidden": 1
+  },
+  {
+   "fieldname": "shift_pattern",
+   "fieldtype": "Link",
+   "label": "Shift",
+   "options": "Shift Pattern",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nInactive",
+   "default": "Active",
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Also the first day of the cycle (Week 1 / Day 1 / Month 1)"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "description": "Leave empty for an open-ended schedule"
+  },
+  {
+   "fieldname": "generation_horizon_days",
+   "fieldtype": "Int",
+   "label": "Generate Days Ahead",
+   "default": "60",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "assign_section",
+   "fieldtype": "Section Break",
+   "label": "Assign To"
+  },
+  {
+   "fieldname": "assign_to",
+   "fieldtype": "Select",
+   "label": "Assign To",
+   "options": "Employee\nDepartment\nBranch\nDesignation\nEmployee Group",
+   "default": "Employee",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_assign",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "depends_on": "eval:doc.assign_to==\"Employee\"",
+   "mandatory_depends_on": "eval:doc.assign_to==\"Employee\"",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "options": "Department",
+   "depends_on": "eval:doc.assign_to==\"Department\"",
+   "mandatory_depends_on": "eval:doc.assign_to==\"Department\"",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch",
+   "depends_on": "eval:doc.assign_to==\"Branch\"",
+   "mandatory_depends_on": "eval:doc.assign_to==\"Branch\"",
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "options": "Designation",
+   "depends_on": "eval:doc.assign_to==\"Designation\"",
+   "mandatory_depends_on": "eval:doc.assign_to==\"Designation\"",
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "employee_group",
+   "fieldtype": "Link",
+   "label": "Employee Group",
+   "options": "Employee Group",
+   "depends_on": "eval:doc.assign_to==\"Employee Group\"",
+   "mandatory_depends_on": "eval:doc.assign_to==\"Employee Group\"",
+   "in_standard_filter": 0
+  },
+  {
+   "fieldname": "employees_section",
+   "fieldtype": "Section Break",
+   "label": "Employees",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "employees",
+   "fieldtype": "Table",
+   "label": "Employees",
+   "options": "Shift Pattern Assignment Employee",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "log_section",
+   "fieldtype": "Section Break",
+   "label": "Generation Log",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "last_generated_on",
+   "fieldtype": "Datetime",
+   "label": "Last Generated On",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "generation_log",
+   "fieldtype": "Table",
+   "label": "Generation Log",
+   "options": "Shift Pattern Generation Log",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Shift Pattern Assignment",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "Shift Pattern Assignment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "is_submittable": 1,
+ "title_field": "shift_pattern",
+ "track_changes": 1
+}

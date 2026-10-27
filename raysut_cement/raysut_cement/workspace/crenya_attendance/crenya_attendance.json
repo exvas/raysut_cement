@@ -1,0 +1,231 @@
+{
+ "charts": [],
+ "content": "[{\"id\": \"hdr_short\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Crenya Attendance</b></span>\", \"col\": 12}}, {\"id\": \"sc_0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule Overview\", \"col\": 3}}, {\"id\": \"sc_1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Break Timetable\", \"col\": 3}}, {\"id\": \"sc_2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Timetable\", \"col\": 3}}, {\"id\": \"sc_3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Shift\", \"col\": 3}}, {\"id\": \"sc_4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule\", \"col\": 3}}, {\"id\": \"sc_5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Checkin\", \"col\": 3}}, {\"id\": \"sc_6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"sc_7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Flexible Shift Work Hours\", \"col\": 3}}, {\"id\": \"spacer_1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_0\", \"type\": \"card\", \"data\": {\"card_name\": \"Scheduling\", \"col\": 3}}, {\"id\": \"card_1\", \"type\": \"card\", \"data\": {\"card_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"card_2\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 3}}, {\"id\": \"card_3\", \"type\": \"card\", \"data\": {\"card_name\": \"Devices\", \"col\": 3}}]",
+ "creation": "2026-10-27 12:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "calendar",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Crenya Attendance",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Scheduling",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Break Timetable",
+   "link_count": 0,
+   "link_to": "Break Timetable",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Timetable",
+   "link_count": 0,
+   "link_to": "Shift Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift",
+   "link_count": 0,
+   "link_to": "Shift Pattern",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Schedule",
+   "link_count": 0,
+   "link_to": "Shift Pattern Assignment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift Assignment",
+   "link_count": 0,
+   "link_to": "Shift Assignment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Checkin",
+   "link_count": 0,
+   "link_to": "Employee Checkin",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance",
+   "link_count": 0,
+   "link_to": "Attendance",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Schedule Overview",
+   "link_count": 0,
+   "link_to": "Shift Roster",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Flexible Shift Work Hours",
+   "link_count": 0,
+   "link_to": "Flexible Shift Work Hours",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Devices",
+   "link_count": 2,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "CrossChex Settings",
+   "link_count": 0,
+   "link_to": "Crosschex Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "CrossChex Log",
+   "link_count": 0,
+   "link_to": "CrossChex Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "Crenya Attendance",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 30.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "label": "Schedule Overview",
+   "link_to": "Shift Roster",
+   "type": "Report",
+   "report_ref_doctype": "Shift Assignment"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Break Timetable",
+   "link_to": "Break Timetable",
+   "type": "DocType"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "label": "Timetable",
+   "link_to": "Shift Type",
+   "type": "DocType"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "List",
+   "label": "Shift",
+   "link_to": "Shift Pattern",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Schedule",
+   "link_to": "Shift Pattern Assignment",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Employee Checkin",
+   "link_to": "Employee Checkin",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Attendance",
+   "link_to": "Attendance",
+   "type": "DocType"
+  },
+  {
+   "color": "Red",
+   "doc_view": "",
+   "label": "Flexible Shift Work Hours",
+   "link_to": "Flexible Shift Work Hours",
+   "type": "Report",
+   "report_ref_doctype": "Attendance"
+  }
+ ],
+ "title": "Crenya Attendance",
+ "type": "Workspace"
+}

@@ -1,0 +1,67 @@
+[
+ {
+  "doc_type": "Shift Type",
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "grace_period_settings_auto_attendance_section",
+  "is_system_generated": 0,
+  "modified": "2026-10-27 12:00:00.000000",
+  "module": "Raysut Cement",
+  "name": "Shift Type-grace_period_settings_auto_attendance_section-depends_on",
+  "property": "depends_on",
+  "property_type": "Data",
+  "value": "eval:doc.enable_auto_attendance && doc.shift_mode!=\"Flexible\""
+ },
+ {
+  "doc_type": "Shift Type",
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "begin_check_in_before_shift_start_time",
+  "is_system_generated": 0,
+  "modified": "2026-10-27 12:00:00.000000",
+  "module": "Raysut Cement",
+  "name": "Shift Type-begin_check_in_before_shift_start_time-depends_on",
+  "property": "depends_on",
+  "property_type": "Data",
+  "value": "eval:doc.shift_mode!=\"Flexible\""
+ },
+ {
+  "doc_type": "Shift Type",
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "allow_check_out_after_shift_end_time",
+  "is_system_generated": 0,
+  "modified": "2026-10-27 12:00:00.000000",
+  "module": "Raysut Cement",
+  "name": "Shift Type-allow_check_out_after_shift_end_time-depends_on",
+  "property": "depends_on",
+  "property_type": "Data",
+  "value": "eval:doc.shift_mode!=\"Flexible\""
+ },
+ {
+  "doc_type": "Shift Type",
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "start_time",
+  "is_system_generated": 0,
+  "modified": "2026-10-27 12:00:00.000000",
+  "module": "Raysut Cement",
+  "name": "Shift Type-start_time-read_only_depends_on",
+  "property": "read_only_depends_on",
+  "property_type": "Data",
+  "value": "eval:doc.shift_mode==\"Flexible\""
+ },
+ {
+  "doc_type": "Shift Type",
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "end_time",
+  "is_system_generated": 0,
+  "modified": "2026-10-27 12:00:00.000000",
+  "module": "Raysut Cement",
+  "name": "Shift Type-end_time-read_only_depends_on",
+  "property": "read_only_depends_on",
+  "property_type": "Data",
+  "value": "eval:doc.shift_mode==\"Flexible\""
+ }
+]

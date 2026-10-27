@@ -5,3 +5,5 @@
 tags
 node_modules
 __pycache__
+# Internal documents (client proposals, specs) - not for GitHub
+docs/

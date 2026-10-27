@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "log_type",
+  "status",
+  "processing_status",
+  "column_break_1",
+  "webhook_source",
+  "request_method",
+  "records_processed",
+  "checkins_created",
+  "section_break_payload",
+  "error_message",
+  "request_payload"
+ ],
+ "fields": [
+  {
+   "fieldname": "log_type",
+   "fieldtype": "Select",
+   "label": "Log Type",
+   "options": "Webhook\nScheduled Sync\nManual Sync\nReconciliation",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Processing\nSuccess\nPartial Success\nFailed",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "processing_status",
+   "fieldtype": "Data",
+   "label": "Processing Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "webhook_source",
+   "fieldtype": "Data",
+   "label": "Source",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_method",
+   "fieldtype": "Data",
+   "label": "Request Method",
+   "read_only": 1
+  },
+  {
+   "fieldname": "records_processed",
+   "fieldtype": "Int",
+   "label": "Records Processed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "checkins_created",
+   "fieldtype": "Int",
+   "label": "Check-ins Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_payload",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "label": "Error Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_payload",
+   "fieldtype": "Code",
+   "label": "Request Payload",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "CrossChex Log",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "System Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

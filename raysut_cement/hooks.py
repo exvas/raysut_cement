@@ -8,7 +8,7 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["frappe/erpnext", "frappe/hrms"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -44,6 +44,10 @@ app_license = "mit"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+	"Employee Checkin": "public/js/employee_checkin.js",
+	"Shift Type": "public/js/shift_type.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -247,3 +251,36 @@ app_license = "mit"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+
+# CrossChex Cloud (ANVIZ devices) -> Employee Checkin
+# ---------------------------------------------------
+
+CROSSCHEX = "raysut_cement.raysut_cement"
+
+scheduler_events = {
+	"cron": {
+		# Runs every minute; only syncs once Crosschex Settings.sync_frequency has elapsed
+		"* * * * *": [f"{CROSSCHEX}.doctype.crosschex_settings.crosschex_settings.scheduled_attendance_sync"],
+		# Re-read the last 2 days and import punches that never arrived
+		"0 */4 * * *": [f"{CROSSCHEX}.crosschex_cloud.reconciliation.scheduled_reconciliation_job"],
+	},
+	"hourly": [f"{CROSSCHEX}.doctype.crosschex_settings.crosschex_settings.check_and_refresh_token"],
+	"daily": [f"{CROSSCHEX}.doctype.crosschex_settings.crosschex_settings.purge_old_logs"],
+}
+
+# Keeps the webhook URL used by the older crosschex_cloud app working
+override_whitelisted_methods = {
+	"crosschex_cloud.api.attendance.make_attendace": f"{CROSSCHEX}.crosschex_cloud.api.attendance.make_attendace",
+}
+
+fixtures = [
+	{"doctype": "Custom Field", "filters": [["module", "=", "Raysut Cement"]]},
+	{"doctype": "Property Setter", "filters": [["module", "=", "Raysut Cement"]]},
+]
+
+# HikCentral-style scheduling: Timetable (Shift Type) -> Shift Pattern -> Schedule
+# --------------------------------------------------------------------------------
+
+override_doctype_class = {"Shift Type": "raysut_cement.raysut_cement.overrides.shift_type.CustomShiftType"}
+
+scheduler_events["daily"].append("raysut_cement.raysut_cement.scheduling.generator.daily_generation")
