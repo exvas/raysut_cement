@@ -9,6 +9,7 @@ from frappe.utils import cint
 
 from raysut_cement.raysut_cement.scheduling.pattern import TIMETABLE_FIELDS, validate_pattern
 from raysut_cement.raysut_cement.scheduling.timetable import window_minutes
+from raysut_cement.raysut_cement.settings import is_enabled
 
 REPEAT_FIELDS = ("repeat_mode", "repeat_every", "week_starts_on")
 
@@ -29,6 +30,8 @@ class ShiftPattern(Document):
 
 	def on_update(self):
 		before = self.get_doc_before_save()
+		if not is_enabled("enable_shift_scheduling"):
+			return
 		if before and self.schedule_signature(before) != self.schedule_signature(self):
 			frappe.enqueue(
 				"raysut_cement.raysut_cement.scheduling.generator.regenerate_for_pattern",

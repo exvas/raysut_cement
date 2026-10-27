@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "creation": "2026-10-27 20:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "features_section",
+  "enable_crosschex",
+  "enable_shift_scheduling",
+  "column_break_features",
+  "enable_timetable_rules",
+  "enable_checkin_summary"
+ ],
+ "fields": [
+  {
+   "fieldname": "features_section",
+   "fieldtype": "Section Break",
+   "label": "Features",
+   "description": "Switch a feature off to stop it without uninstalling the app. Existing records are kept."
+  },
+  {
+   "fieldname": "enable_crosschex",
+   "fieldtype": "Check",
+   "label": "Enable CrossChex Cloud Integration",
+   "default": "1",
+   "description": "Scheduled punch sync, reconciliation, token refresh and the webhook. Crosschex Settings still has its own sync and webhook switches."
+  },
+  {
+   "fieldname": "enable_shift_scheduling",
+   "fieldtype": "Check",
+   "label": "Enable Shift Scheduling",
+   "default": "1",
+   "description": "Submitting a Schedule, the daily generation job and regeneration after a Shift change."
+  },
+  {
+   "fieldname": "column_break_features",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "enable_timetable_rules",
+   "fieldtype": "Check",
+   "label": "Enable Flexible Timetables and Break Deduction",
+   "default": "1",
+   "description": "When off, auto attendance uses standard HRMS rules for every Shift Type and the Timetable Mode / Break Period fields are hidden."
+  },
+  {
+   "fieldname": "enable_checkin_summary",
+   "fieldtype": "Check",
+   "label": "Show Punch Summary on Employee Checkin",
+   "default": "1",
+   "description": "Table of the same day's punches on the Employee Checkin form."
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-27 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "Raysut Attendance Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "HR Manager",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "HR User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"hdr_short\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Crenya Attendance</b></span>\", \"col\": 12}}, {\"id\": \"sc_0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule Overview\", \"col\": 3}}, {\"id\": \"sc_1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Break Timetable\", \"col\": 3}}, {\"id\": \"sc_2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Timetable\", \"col\": 3}}, {\"id\": \"sc_3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Shift\", \"col\": 3}}, {\"id\": \"sc_4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule\", \"col\": 3}}, {\"id\": \"sc_5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Checkin\", \"col\": 3}}, {\"id\": \"sc_6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"sc_7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Flexible Shift Work Hours\", \"col\": 3}}, {\"id\": \"spacer_1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_0\", \"type\": \"card\", \"data\": {\"card_name\": \"Scheduling\", \"col\": 3}}, {\"id\": \"card_1\", \"type\": \"card\", \"data\": {\"card_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"card_2\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 3}}, {\"id\": \"card_3\", \"type\": \"card\", \"data\": {\"card_name\": \"Devices\", \"col\": 3}}]",
+ "content": "[{\"id\": \"hdr_short\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Crenya Attendance</b></span>\", \"col\": 12}}, {\"id\": \"sc_0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule Overview\", \"col\": 3}}, {\"id\": \"sc_1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Break Timetable\", \"col\": 3}}, {\"id\": \"sc_2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Timetable\", \"col\": 3}}, {\"id\": \"sc_3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Shift\", \"col\": 3}}, {\"id\": \"sc_4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule\", \"col\": 3}}, {\"id\": \"sc_5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Checkin\", \"col\": 3}}, {\"id\": \"sc_6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"sc_7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Flexible Shift Work Hours\", \"col\": 3}}, {\"id\": \"spacer_1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_0\", \"type\": \"card\", \"data\": {\"card_name\": \"Scheduling\", \"col\": 3}}, {\"id\": \"card_1\", \"type\": \"card\", \"data\": {\"card_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"card_2\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 3}}, {\"id\": \"card_3\", \"type\": \"card\", \"data\": {\"card_name\": \"Devices\", \"col\": 3}}, {\"id\": \"rcsettingscard\", \"type\": \"card\", \"data\": {\"card_name\": \"Settings\", \"col\": 3}}]",
  "creation": "2026-10-27 12:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -150,6 +150,24 @@
    "label": "CrossChex Log",
    "link_count": 0,
    "link_to": "CrossChex Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Settings",
+   "link_count": 1,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Raysut Attendance Settings",
+   "link_count": 0,
+   "link_to": "Raysut Attendance Settings",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"

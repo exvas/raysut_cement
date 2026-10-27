@@ -4,11 +4,13 @@
 from datetime import datetime, timedelta, timezone
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_days, flt, get_datetime, now_datetime
 
 from raysut_cement.raysut_cement.crosschex_cloud.api.attendance import create_attendance_log
 from raysut_cement.raysut_cement.crosschex_cloud.client import fetch_records, get_token, system_to_utc
+from raysut_cement.raysut_cement.settings import is_enabled
 
 MANAGER_ROLES = ("System Manager", "HR Manager")
 
@@ -71,6 +73,8 @@ def get_crosschex_status():
 @frappe.whitelist()
 def sync_individual_device(config_row_name, **kwargs):
 	frappe.only_for(MANAGER_ROLES)
+	if not is_enabled("enable_crosschex"):
+		frappe.throw(_("CrossChex Cloud Integration is disabled in Raysut Attendance Settings"))
 	return _sync_config(_get_config(config_row_name), frappe.get_single("Crosschex Settings"))
 
 
@@ -102,6 +106,8 @@ def _sync_config(config, settings):
 
 def scheduled_attendance_sync():
 	"""Runs every minute; only syncs once sync_frequency minutes have passed since the last run."""
+	if not is_enabled("enable_crosschex"):
+		return
 	settings = frappe.get_single("Crosschex Settings")
 	if not settings.enable_realtime_sync or not settings.api_configurations:
 		return
@@ -137,6 +143,8 @@ def scheduled_attendance_sync():
 
 def check_and_refresh_token():
 	"""Hourly: renew tokens that are missing or expire within the next 30 minutes."""
+	if not is_enabled("enable_crosschex"):
+		return
 	settings = frappe.get_single("Crosschex Settings")
 	if not settings.enable_realtime_sync:
 		return

@@ -281,6 +281,8 @@ fixtures = [
 # HikCentral-style scheduling: Timetable (Shift Type) -> Shift Pattern -> Schedule
 # --------------------------------------------------------------------------------
 
+boot_session = "raysut_cement.raysut_cement.settings.boot_session"
+
 override_doctype_class = {"Shift Type": "raysut_cement.raysut_cement.overrides.shift_type.CustomShiftType"}
 
 scheduler_events["daily"].append("raysut_cement.raysut_cement.scheduling.generator.daily_generation")

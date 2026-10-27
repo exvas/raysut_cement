@@ -7,6 +7,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, get_link_to_form, getdate
 
 from raysut_cement.raysut_cement.scheduling.generator import clear_future, generate, resolve_employees
+from raysut_cement.raysut_cement.settings import is_enabled
 
 
 class ShiftPatternAssignment(Document):
@@ -53,6 +54,9 @@ class ShiftPatternAssignment(Document):
 				indicator="orange",
 			)
 
+	def before_submit(self):
+		check_scheduling_enabled()
+
 	def on_submit(self):
 		generate(self)
 
@@ -69,7 +73,7 @@ class ShiftPatternAssignment(Document):
 			return
 		if before.status == "Active" and self.status == "Inactive":
 			clear_future(self)
-		elif self.status == "Active" and (
+		elif is_enabled("enable_shift_scheduling") and self.status == "Active" and (
 			before.status != "Active" or cint(before.generation_horizon_days) != cint(self.generation_horizon_days)
 		):
 			self.flags.in_generation = True
@@ -80,7 +84,13 @@ class ShiftPatternAssignment(Document):
 def regenerate_now(name):
 	doc = frappe.get_doc("Shift Pattern Assignment", name)
 	doc.check_permission("write")
+	check_scheduling_enabled()
 	from raysut_cement.raysut_cement.scheduling.generator import regenerate
 
 	regenerate(doc)
 	return doc.last_generated_on
+
+
+def check_scheduling_enabled():
+	if not is_enabled("enable_shift_scheduling"):
+		frappe.throw(_("Shift Scheduling is disabled in {0}").format(get_link_to_form("Raysut Attendance Settings", "Raysut Attendance Settings")))

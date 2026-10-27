@@ -5,9 +5,16 @@ const TIMETABLE_FIELDS = [
 	"valid_period_end_day", "enable_latest_check_in", "latest_check_in_day", "latest_check_in_time",
 ];
 const DAY_OFFSET = { "Current Day": 0, "Next Day": 1, "Next 2 Days": 2, "Next 3 Days": 3 };
+const TIMETABLE_LAYOUT = ["timetable_mode_section", "timetable_overview_section", "flexible_settings_section", "break_period_tab"];
+
+// Switched off in Raysut Attendance Settings: plain HRMS Shift Type form
+const timetable_rules_enabled = () => frappe.boot.raysut_features?.enable_timetable_rules !== false;
 
 const timetable_handlers = {
-	refresh: (frm) => render_timetable_overview(frm),
+	refresh(frm) {
+		frm.toggle_display(TIMETABLE_LAYOUT, timetable_rules_enabled());
+		render_timetable_overview(frm);
+	},
 	valid_period_start: (frm) => sync_flexible_window(frm),
 	valid_period_end: (frm) => sync_flexible_window(frm),
 	shift_mode: (frm) => sync_flexible_window(frm),
@@ -27,7 +34,7 @@ frappe.ui.form.on("Timetable Break", {
 });
 
 function sync_flexible_window(frm) {
-	if (frm.doc.shift_mode !== "Flexible") return;
+	if (!timetable_rules_enabled() || frm.doc.shift_mode !== "Flexible") return;
 	if (frm.doc.valid_period_start && frm.doc.start_time !== frm.doc.valid_period_start) {
 		frm.set_value("start_time", frm.doc.valid_period_start);
 	}
@@ -63,7 +70,7 @@ function timetable_range(doc) {
 
 function render_timetable_overview(frm) {
 	const field = frm.get_field("timetable_overview");
-	if (!field) return;
+	if (!field || !timetable_rules_enabled()) return;
 	const doc = frm.doc;
 	const [start, end] = timetable_range(doc);
 	if (start === null || end === null) {

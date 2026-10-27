@@ -9,9 +9,12 @@ import frappe
 
 from raysut_cement.raysut_cement.crosschex_cloud.api.attendance import create_attendance_log
 from raysut_cement.raysut_cement.crosschex_cloud.client import fetch_records
+from raysut_cement.raysut_cement.settings import is_enabled
 
 
 def reconcile_missing_checkins(days_back=2, dry_run=False):
+	if not is_enabled("enable_crosschex"):
+		return {"skipped": True, "reason": "CrossChex disabled in Raysut Attendance Settings"}
 	settings = frappe.get_single("Crosschex Settings")
 	if not settings.enable_realtime_sync:
 		return {"skipped": True, "reason": "Sync disabled"}

@@ -9,6 +9,7 @@ import json
 import frappe
 
 from raysut_cement.raysut_cement.crosschex_cloud.client import to_system_time
+from raysut_cement.raysut_cement.settings import is_enabled
 
 COMMIT_EVERY = 100
 
@@ -130,7 +131,7 @@ def _log_missing_employee_once(error, raw):
 def make_attendace(**kwargs):
 	"""Webhook endpoint for CrossChex Cloud (name kept as configured in CrossChex)."""
 	settings = frappe.get_cached_doc("Crosschex Settings")
-	if not settings.enable_webhook:
+	if not is_enabled("enable_crosschex") or not settings.enable_webhook:
 		raise frappe.PermissionError("CrossChex webhook is disabled")
 
 	expected = settings.get_password("webhook_token", raise_exception=False)

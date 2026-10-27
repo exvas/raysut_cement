@@ -1,6 +1,8 @@
 frappe.ui.form.on("Employee Checkin", {
 	refresh(frm) {
-		if (!frm.is_new()) {
+		const enabled = frappe.boot.raysut_features?.enable_checkin_summary !== false;
+		frm.toggle_display("checkin_summary_html", enabled);
+		if (enabled && !frm.is_new()) {
 			show_checkin_summary(frm);
 		}
 	},

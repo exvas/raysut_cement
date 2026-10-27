@@ -12,6 +12,7 @@ from frappe.utils.nestedset import get_descendants_of
 from hrms.hr.doctype.shift_assignment.shift_assignment import has_overlapping_timings
 
 from raysut_cement.raysut_cement.scheduling.pattern import rows_by_slot, timetables_for_date
+from raysut_cement.raysut_cement.settings import is_enabled
 
 GROUP_FIELDS = {"Department": "department", "Branch": "branch", "Designation": "designation"}
 
@@ -249,6 +250,8 @@ def regenerate_for_pattern(pattern_name):
 
 def daily_generation():
 	"""Extend every active schedule to its horizon and follow joiners, leavers and transfers."""
+	if not is_enabled("enable_shift_scheduling"):
+		return
 	for name in frappe.get_all("Shift Pattern Assignment", filters={"docstatus": 1, "status": "Active"}, pluck="name"):
 		try:
 			assignment = frappe.get_doc("Shift Pattern Assignment", name)

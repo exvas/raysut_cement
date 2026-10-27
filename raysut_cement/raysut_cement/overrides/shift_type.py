@@ -25,6 +25,7 @@ from raysut_cement.raysut_cement.scheduling.timetable import (
 	window_minutes,
 	worked_intervals,
 )
+from raysut_cement.raysut_cement.settings import is_enabled
 
 FLEXIBLE_IGNORED_FIELDS = (
 	"enable_late_entry_marking",
@@ -38,6 +39,8 @@ FLEXIBLE_IGNORED_FIELDS = (
 
 class CustomShiftType(ShiftType):
 	def validate(self):
+		if not is_enabled("enable_timetable_rules"):
+			return super().validate()
 		if is_flexible(self):
 			self.apply_flexible_window()
 		super().validate()
@@ -100,6 +103,9 @@ class CustomShiftType(ShiftType):
 
 	def get_attendance(self, logs):
 		"""Normal: core result with breaks deducted. Flexible: minimum-work-time rules."""
+		if not is_enabled("enable_timetable_rules"):
+			self._last_attendance_details = None
+			return super().get_attendance(logs)
 		attendance_date = logs[0].shift_start.date()
 		breaks = get_breaks(self)
 
@@ -133,6 +139,8 @@ class CustomShiftType(ShiftType):
 
 	def _process(self, logs):
 		"""Same flow as core, plus the Raysut fields on each Attendance it creates."""
+		if not is_enabled("enable_timetable_rules"):
+			return super()._process(logs)
 		group_key = lambda x: (x["employee"], x["shift_start"])  # noqa
 		for (employee, shift_start), group in groupby(sorted(logs, key=group_key), key=group_key):
 			single_shift_logs = list(group)
