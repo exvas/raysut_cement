@@ -4,13 +4,11 @@
 """Shift Type ("Timetable") with Normal / Flexible modes and Break Timetables."""
 
 from datetime import date
-from itertools import groupby
 
 import frappe
 from frappe import _
-from frappe.utils import cint, create_batch, flt
-from hrms.hr.doctype.employee_checkin.employee_checkin import mark_attendance_and_link_log
-from hrms.hr.doctype.shift_type.shift_type import EMPLOYEE_CHUNK_SIZE, ShiftType
+from frappe.utils import cint, flt
+from hrms.hr.doctype.shift_type.shift_type import ShiftType
 
 from raysut_cement.raysut_cement.scheduling.timetable import (
 	DAY_OFFSET,
@@ -101,18 +99,21 @@ class CustomShiftType(ShiftType):
 
 	# ------------------------------------------------------------ attendance
 
-	def get_attendance(self, logs):
-		"""Normal: core result with breaks deducted. Flexible: minimum-work-time rules."""
+	def get_attendance(self, logs, *thresholds):
+		"""Normal: core result with breaks deducted. Flexible: minimum-work-time rules.
+
+		HRMS v16 passes (absent, half day) thresholds, already halved on half holidays; v15 passes none.
+		"""
 		if not is_enabled("enable_timetable_rules"):
-			self._last_attendance_details = None
-			return super().get_attendance(logs)
+			return super().get_attendance(logs, *thresholds)
+
 		attendance_date = logs[0].shift_start.date()
 		breaks = get_breaks(self)
 
 		if is_flexible(self):
 			result = evaluate_flexible(self, logs, attendance_date, breaks)
 		else:
-			status, hours, late_entry, early_exit, in_time, out_time = super().get_attendance(logs)
+			status, hours, late_entry, early_exit, in_time, out_time = super().get_attendance(logs, *thresholds)
 			result = frappe._dict(
 				status=status, working_hours=hours, late_entry=late_entry, early_exit=early_exit,
 				in_time=in_time, out_time=out_time, break_minutes=0, required_hours=None, remarks=None,
@@ -122,62 +123,54 @@ class CustomShiftType(ShiftType):
 				window_start, _end = window_bounds(self, attendance_date)
 				result.break_minutes = break_deduction_minutes(breaks, intervals, window_start)
 				result.working_hours = max(0.0, round(hours - result.break_minutes / 60, 2))
-				result.status = self.status_for_hours(result.working_hours)
+				result.status = self.status_for_hours(result.working_hours, *thresholds)
 
-		self._last_attendance_details = result
+		self.__dict__.setdefault("_attendance_details", {})[(logs[0].employee, attendance_date)] = result
 		return (
 			result.status, result.working_hours, bool(result.get("late_entry")),
 			bool(result.get("early_exit")), result.in_time, result.out_time,
 		)
 
-	def status_for_hours(self, hours):
-		if self.working_hours_threshold_for_absent and hours < self.working_hours_threshold_for_absent:
+	def status_for_hours(self, hours, absent_threshold=None, half_day_threshold=None):
+		if absent_threshold is None:
+			absent_threshold = flt(self.working_hours_threshold_for_absent)
+		if half_day_threshold is None:
+			half_day_threshold = flt(self.working_hours_threshold_for_half_day)
+		if absent_threshold and hours < absent_threshold:
 			return "Absent"
-		if self.working_hours_threshold_for_half_day and hours < self.working_hours_threshold_for_half_day:
+		if half_day_threshold and hours < half_day_threshold:
 			return "Half Day"
 		return "Present"
 
 	def _process(self, logs):
-		"""Same flow as core, plus the Raysut fields on each Attendance it creates."""
-		if not is_enabled("enable_timetable_rules"):
-			return super()._process(logs)
-		group_key = lambda x: (x["employee"], x["shift_start"])  # noqa
-		for (employee, shift_start), group in groupby(sorted(logs, key=group_key), key=group_key):
-			single_shift_logs = list(group)
-			attendance_date = shift_start.date()
-			if not self.should_mark_attendance(employee, attendance_date):
-				continue
+		"""Core flow (v15 or v16) unchanged, then the Raysut fields on the Attendance it created."""
+		self._attendance_details = {}
+		super()._process(logs)
+		if is_enabled("enable_timetable_rules"):
+			self.update_attendance_details()
 
-			status, hours, late_entry, early_exit, in_time, out_time = self.get_attendance(single_shift_logs)
-			attendance = mark_attendance_and_link_log(
-				single_shift_logs, status, attendance_date, hours, late_entry, early_exit, in_time, out_time, self.name,
+	def update_attendance_details(self):
+		for (employee, attendance_date), details in self._attendance_details.items():
+			attendance = frappe.db.get_value(
+				"Attendance", {"employee": employee, "attendance_date": attendance_date, "shift": self.name, "docstatus": 1}
 			)
-			if attendance:
-				self.update_attendance_details(attendance, employee, attendance_date)
-
-		frappe.db.commit()  # nosemgrep - same as core, keep progress between batches
-
-		assigned_employees = self.get_assigned_employees(self.process_attendance_after, True)
-		for batch in create_batch(assigned_employees, EMPLOYEE_CHUNK_SIZE):
-			for employee in batch:
-				self.mark_absent_for_dates_with_no_attendance(employee)
-				self.mark_absent_for_half_day_dates(employee)
-			frappe.db.commit()  # nosemgrep
-
-	def update_attendance_details(self, attendance, employee, attendance_date):
-		details = getattr(self, "_last_attendance_details", None) or frappe._dict()
-		frappe.db.set_value(
-			"Attendance",
-			attendance.name,
-			{
-				"shift_mode": self.shift_mode or "Normal",
-				"shift_pattern": get_shift_pattern(employee, self.name, attendance_date),
-				"required_work_hours": details.required_hours,
-				"break_deducted_minutes": cint(details.break_minutes),
-				"flexible_remarks": details.remarks,
-			},
-			update_modified=False,
-		)
+			if not attendance:
+				continue
+			frappe.db.set_value(
+				"Attendance",
+				attendance,
+				{
+					"shift_mode": self.shift_mode or "Normal",
+					"shift_pattern": get_shift_pattern(employee, self.name, attendance_date),
+					"required_work_hours": details.required_hours,
+					"break_deducted_minutes": cint(details.break_minutes),
+					"flexible_remarks": details.remarks,
+				},
+				update_modified=False,
+			)
+		self._attendance_details = {}
+		if not frappe.flags.in_test:
+			frappe.db.commit()  # nosemgrep - core commits the attendance itself; keep the details with it
 
 
 def get_shift_pattern(employee, shift_type, attendance_date):

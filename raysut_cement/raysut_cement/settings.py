@@ -18,3 +18,8 @@ def is_enabled(feature):
 
 def boot_session(bootinfo):
 	bootinfo.raysut_features = {feature: is_enabled(feature) for feature in FEATURES}
+
+
+def has_app_permission():
+	"""Show the Raysut Cement app icon to HR and system managers only."""
+	return bool({"System Manager", "HR Manager", "HR User"} & set(frappe.get_roles()))

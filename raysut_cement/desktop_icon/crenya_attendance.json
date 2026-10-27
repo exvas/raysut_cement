@@ -1,0 +1,22 @@
+{
+ "app": "raysut_cement",
+ "creation": "2026-10-27 23:30:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "idx": 0,
+ "modified": "2026-10-27 23:30:00.000000",
+ "modified_by": "Administrator",
+ "name": "Crenya Attendance",
+ "owner": "Administrator",
+ "hidden": 0,
+ "icon": "calendar-clock",
+ "icon_type": "Link",
+ "label": "Crenya Attendance",
+ "link_to": "Crenya Attendance",
+ "link_type": "Workspace Sidebar",
+ "logo_url": "/assets/raysut_cement/icons/crenya-attendance.svg",
+ "parent_icon": "Raysut Cement",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}

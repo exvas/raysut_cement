@@ -236,6 +236,24 @@ class TestFlexibleAttendance(SchedulingTestCase):
 		att = self.run_flexible_day(shift, ["09:00", "17:00"])
 		self.assertEqual((att.working_hours, att.break_deducted_minutes, att.status), (7.0, 60, "Half Day"))
 
+	def test_06c_v16_thresholds_passed_in_are_used(self):
+		"""HRMS v16 calls get_attendance(logs, absent, half_day), halved on half holidays."""
+		lunch = self.break_timetable(break_type="Fixed", break_start="13:00:00", break_end="14:00:00")
+		shift = self.timetable("NormalV16", "09:00:00", "17:00:00", working_hours_threshold_for_half_day=7.5,
+			timetable_breaks=[{"break_timetable": lunch.name}])
+		day_start = datetime.combine(PAST_DAY, datetime.min.time())
+		logs = [
+			frappe._dict(employee="EMP-X", time=day_start.replace(hour=h), log_type=None,
+				shift_start=day_start.replace(hour=9), shift_end=day_start.replace(hour=17))
+			for h in (9, 17)
+		]
+		self.assertEqual(shift.get_attendance(logs)[:2], ("Half Day", 7.0))
+		# stand-in for the v16 core method so this also runs on v15
+		v16_core = lambda self, logs, *thresholds: ("Present", 8.0, False, False, logs[0].time, logs[-1].time)  # noqa
+		with patch.object(ShiftType, "get_attendance", v16_core):
+			self.assertEqual(shift.get_attendance(logs, 0, 3.75)[:2], ("Present", 7.0))
+			self.assertEqual(shift.get_attendance(logs, 0, 7.5)[:2], ("Half Day", 7.0))
+
 
 class TestTimetableValidation(SchedulingTestCase):
 	def test_flexible_window_drives_start_end(self):
