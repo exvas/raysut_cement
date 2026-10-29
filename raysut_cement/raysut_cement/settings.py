@@ -18,6 +18,42 @@ def is_enabled(feature):
 
 def boot_session(bootinfo):
 	bootinfo.raysut_features = {feature: is_enabled(feature) for feature in FEATURES}
+	hide_blocked_apps(bootinfo)
+
+
+def get_hidden_apps(user=None):
+	"""Apps whose every module the user's Module Profile blocks.
+
+	ERPNext's own has_permission lets in every desk user, so blocking its modules is how an
+	HR-only user is kept off its desktop tile and rail.
+	"""
+	blocked = set(frappe.get_cached_doc("User", user or frappe.session.user).get_blocked_modules())
+	if not blocked:
+		return set()
+
+	hidden = set()
+	for app in frappe.get_installed_apps():
+		modules = set(frappe.get_all("Module Def", {"app_name": app}, pluck="name"))
+		if app != "frappe" and modules and modules <= blocked:
+			hidden.add(app)
+	return hidden
+
+
+def hide_blocked_apps(bootinfo):
+	# v16 builds the desktop tiles and the rail from bootinfo.app_data; v15 has no such key
+	hidden = get_hidden_apps()
+	for app in bootinfo.get("app_data") or []:
+		if app.get("app_name") in hidden:
+			app.update(on_apps_screen=False, app_route="", desk_route="", dock=[])
+
+
+@frappe.whitelist()
+def get_apps():
+	"""frappe.apps.get_apps without the apps get_hidden_apps keeps off the desk."""
+	from frappe.apps import get_apps as core_get_apps
+
+	hidden = get_hidden_apps()
+	return [app for app in core_get_apps() if app.get("name") not in hidden]
 
 
 def has_app_permission():

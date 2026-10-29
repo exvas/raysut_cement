@@ -272,6 +272,7 @@ scheduler_events = {
 # Keeps the webhook URL used by the older crosschex_cloud app working
 override_whitelisted_methods = {
 	"crosschex_cloud.api.attendance.make_attendace": f"{CROSSCHEX}.crosschex_cloud.api.attendance.make_attendace",
+	"frappe.apps.get_apps": "raysut_cement.raysut_cement.settings.get_apps",
 }
 
 fixtures = [

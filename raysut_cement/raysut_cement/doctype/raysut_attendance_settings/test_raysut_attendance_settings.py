@@ -10,7 +10,7 @@ from raysut_cement.raysut_cement.crosschex_cloud.api import attendance
 from raysut_cement.raysut_cement.doctype.crosschex_settings import crosschex_settings
 from raysut_cement.raysut_cement.scheduling import generator
 from raysut_cement.raysut_cement.scheduling.test_scheduling import PAST_DAY, SchedulingTestCase
-from raysut_cement.raysut_cement.settings import DOCTYPE, FEATURES, boot_session, is_enabled
+from raysut_cement.raysut_cement.settings import DOCTYPE, FEATURES, boot_session, get_apps, is_enabled
 
 
 class TestRaysutAttendanceSettings(SchedulingTestCase):
@@ -75,3 +75,22 @@ class TestRaysutAttendanceSettings(SchedulingTestCase):
 		flexible = self.run_flexible_day(flex, ["09:05", "18:00"])
 		self.assertEqual(flexible.status, "Present")
 		self.assertIsNone(flexible.flexible_remarks)
+
+	def test_app_with_every_module_blocked_is_hidden(self):
+		erpnext_modules = frappe.get_all("Module Def", {"app_name": "erpnext"}, pluck="name")
+		user = frappe.get_cached_doc("User", frappe.session.user)
+		apps = [frappe._dict(app_name=a, on_apps_screen=True, dock=[{"x": 1}]) for a in ("erpnext", "hrms")]
+
+		with patch.object(type(user), "get_blocked_modules", return_value=erpnext_modules[1:]):
+			boot_session(bootinfo := frappe._dict(app_data=apps))
+			self.assertTrue(bootinfo.app_data[0].on_apps_screen)
+
+		with (
+			patch.object(type(user), "get_blocked_modules", return_value=erpnext_modules),
+			patch("frappe.apps.get_apps", return_value=[{"name": "erpnext"}, {"name": "hrms"}]),
+		):
+			boot_session(bootinfo := frappe._dict(app_data=apps))
+			erpnext, hrms = bootinfo.app_data
+			self.assertEqual((erpnext.on_apps_screen, erpnext.dock), (False, []))
+			self.assertTrue(hrms.on_apps_screen)
+			self.assertEqual(get_apps(), [{"name": "hrms"}])
