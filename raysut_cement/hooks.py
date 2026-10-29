@@ -11,13 +11,13 @@ app_license = "mit"
 required_apps = ["frappe/erpnext", "frappe/hrms"]
 
 # Each item in the list will be shown as an app in the apps page
-# v16 also reads desktop_icon/ and workspace_sidebar/ in this app folder
+# Frappe 16.5x desk: desktop_icon/, dock/ and <module>/sidebar/ come from scripts/gen_desk.py
 add_to_apps_screen = [
 	{
 		"name": "raysut_cement",
 		"logo": "/assets/raysut_cement/images/raysut-cement-logo.svg",
 		"title": "Raysut Cement",
-		"route": "/app/crenya-attendance",
+		"route": "/desk/crenya-attendance",
 		"has_permission": "raysut_cement.raysut_cement.settings.has_app_permission",
 	}
 ]
