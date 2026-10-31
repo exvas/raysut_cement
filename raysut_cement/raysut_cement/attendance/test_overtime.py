@@ -190,6 +190,23 @@ class TestOvertime(SchedulingTestCase):
 		self.assertEqual(values[MONDAY], (9, 0, 0))  # no shift: no basic hours to be over
 		self.assertEqual(values[FRIDAY], (9, 0, 9))  # holiday work is still OT2
 
+	def test_under_time_on_a_short_working_day_only(self):
+		fixed = self.timetable("UT", "07:00:00", "15:00:00", flexi_undertime_tolerance=5)
+		with_shift = self.employee(holiday_list=self.holidays, default_shift=fixed.name)
+		without_shift = self.employee(holiday_list=self.holidays)
+
+		def under_time(employee, day, hours, status="Present"):
+			return frappe.get_doc(
+				{"doctype": "Attendance", "employee": employee, "attendance_date": day, "status": status,
+				 "working_hours": hours, "company": self.company}
+			).insert().under_time_minutes
+
+		self.assertEqual(under_time(with_shift, MONDAY, 7), 60)
+		self.assertEqual(under_time(with_shift, TUESDAY, 7.95), 0)  # 3 minutes short: within tolerance
+		self.assertEqual(under_time(with_shift, THURSDAY, 4, "Half Day"), 0)
+		self.assertEqual(under_time(with_shift, FRIDAY, 3), 0)  # holiday work is never short
+		self.assertEqual(under_time(without_shift, MONDAY, 7), 0)  # no shift: no required hours
+
 	# ------------------------------------------------------------ fixed shifts
 
 	def test_fixed_shift_ot_and_holiday_punches_are_not_skipped(self):

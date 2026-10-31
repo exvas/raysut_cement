@@ -27,6 +27,7 @@ SHIFT_FIELDS = (
 	"ot_policy",
 	"enable_flexible_checkin",
 	"flexi_required_hours",
+	"flexi_undertime_tolerance",
 )
 POLICY_FIELDS = (
 	"min_ot_minutes",
@@ -122,25 +123,38 @@ def get_shift(name):
 	return frappe.get_cached_value("Shift Type", name, SHIFT_FIELDS, as_dict=True) if name else None
 
 
+def under_time_minutes(worked, shift):
+	"""Minutes short of the shift's required hours, when more than its tolerance (else 0)."""
+	required = required_hours(shift)
+	shortfall = required * 60 - worked * 60 if required > 0 else 0
+	return round(shortfall) if shortfall > cint(shift.get("flexi_undertime_tolerance")) else 0
+
+
 def overtime_values(attendance, holiday, shift_name=None):
-	"""The four overtime fields for an Attendance (doc or row), given whether its date is a holiday.
+	"""Worked hours, OT1, OT2 and under time for an Attendance (doc or row), given whether its date
+	is a holiday.
 
 	Without a shift on the Attendance (manual or imported days) the employee's shift, passed as
-	shift_name, sets the required hours.
+	shift_name, sets the required hours. Under time is for a full working day only: not a holiday,
+	a half day or a missing punch.
 	"""
 	missing_punch = attendance.get("custom_missing_punch")
 	worked = 0.0 if missing_punch or attendance.status not in WORKED_STATUSES else max(flt(attendance.working_hours), 0.0)
 	holiday_work = bool(holiday) and attendance.status in WORKED_STATUSES
 
 	ot1 = ot2 = 0.0
+	under_time = 0
 	if worked:
 		shift = get_shift(attendance.get("shift") or shift_name) or frappe._dict()
 		ot1, ot2 = shift_overtime(worked, shift, holiday_work)
+		if not holiday_work and attendance.status in ("Present", "Work From Home"):
+			under_time = under_time_minutes(worked, shift)
 	return {
 		"custom_worked_hours": round(worked, 2),
 		"custom_is_holiday_work": 1 if holiday_work else 0,
 		"custom_ot1_hours": ot1,
 		"custom_ot2_hours": ot2,
+		"under_time_minutes": under_time,
 	}
 
 
@@ -158,7 +172,7 @@ def recalculate_overtime(from_date, to_date, employee=None):
 	"""Refill the overtime fields on submitted Attendance in a date range (for example imported
 	history). Rows that already hold these values are left untouched. Returns the number changed."""
 	frappe.only_for("System Manager")
-	fields = ["custom_worked_hours", "custom_is_holiday_work", "custom_ot1_hours", "custom_ot2_hours"]
+	fields = ["custom_worked_hours", "custom_is_holiday_work", "custom_ot1_hours", "custom_ot2_hours", "under_time_minutes"]
 	filters = {"docstatus": 1, "attendance_date": ("between", [from_date, to_date])}
 	if employee:
 		filters["employee"] = employee

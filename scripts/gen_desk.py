@@ -47,6 +47,11 @@ SPEC = {
 				("doctype", "Timetable", "Shift Type", "clock"),
 				("doctype", "Break Timetable", "Break Timetable", "coffee"),
 				("doctype", "OT Policy", "OT Policy", "timer"),
+				("section", "Reports", "notepad-text", [
+					("report", "Daily Attendance", "Daily Attendance"),
+					("report", "Consolidated Attendance", "Consolidated Attendance"),
+					("report", "Under Time", "Under Time"),
+				]),
 			],
 		},
 		{
@@ -57,6 +62,11 @@ SPEC = {
 				("doctype", "CrossChex Settings", "Crosschex Settings", "settings"),
 				("doctype", "CrossChex Log", "CrossChex Log", "list-checks"),
 				("doctype", "Employee Checkin", "Employee Checkin", "pointer"),
+				("section", "Reports", "notepad-text", [
+					("report", "Daily Attendance", "Daily Attendance"),
+					("report", "Consolidated Attendance", "Consolidated Attendance"),
+					("report", "Under Time", "Under Time"),
+				]),
 			],
 		},
 	],

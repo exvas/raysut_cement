@@ -108,7 +108,8 @@ class TestFlexiCheckin(SchedulingTestCase):
 		shift = self.timetable("Standard", "07:00:00", "15:00:00", enable_late_entry_marking=1, late_entry_grace_period=15)
 		attendance = self.day(shift, "08:00", "15:00")
 		self.assertEqual((attendance.status, attendance.late_entry, attendance.working_hours), ("Present", 1, 7))
-		self.assertEqual((attendance.flexi_shift_applied, attendance.under_time_minutes, attendance.late_minutes), (0, 0, 60))
+		# status and late marking are core's; under time (7 of 8 hours) is reported for every shift
+		self.assertEqual((attendance.flexi_shift_applied, attendance.under_time_minutes, attendance.late_minutes), (0, 60, 60))
 
 	# ------------------------------------------------------------ settings
 

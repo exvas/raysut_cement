@@ -1,6 +1,6 @@
 {
  "app": "raysut_cement",
- "creation": "2026-10-31 15:31:15.337660",
+ "creation": "2026-10-31 17:42:31.536054",
  "docstatus": 0,
  "doctype": "Dock",
  "idx": 0,
@@ -30,7 +30,7 @@
    "title": "Attendance Devices"
   }
  ],
- "modified": "2026-10-31 15:31:15.337660",
+ "modified": "2026-10-31 17:42:31.536054",
  "modified_by": "Administrator",
  "name": "raysut_cement",
  "owner": "Administrator",

@@ -1,6 +1,6 @@
 {
  "app": "raysut_cement",
- "creation": "2026-10-31 15:31:15.337660",
+ "creation": "2026-10-31 17:42:31.536054",
  "docstatus": 0,
  "doctype": "Sidebar",
  "header_icon": "calendar-check",
@@ -240,7 +240,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-31 15:31:15.337660",
+ "modified": "2026-10-31 17:42:31.536054",
  "modified_by": "Administrator",
  "module": "Raysut Cement",
  "name": "Crenya Attendance",
