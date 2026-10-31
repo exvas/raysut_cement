@@ -102,6 +102,33 @@ def import_employee_master(rows, company=None):
 	return result
 
 
+@frappe.whitelist(methods=["POST"])
+def set_employee_status(employees, status):
+	"""Set Active / Inactive / Left on many employees, like the import does without the date of
+	birth and gender TAMS never had. Returns {"updated": n, "errors": [...]}."""
+	frappe.only_for("System Manager")
+	if status not in ("Active", "Inactive", "Left"):
+		frappe.throw(frappe._("Status must be Active, Inactive or Left"))
+	result = {"updated": 0, "errors": []}
+	for name in frappe.parse_json(employees):
+		employee = frappe.get_doc("Employee", name)
+		if employee.status == status:
+			continue
+		employee.status = status
+		if status == "Left" and not employee.relieving_date:
+			employee.relieving_date = nowdate()
+		employee.flags.ignore_mandatory = True
+		frappe.db.savepoint("employee_status")
+		try:
+			employee.save()
+		except frappe.ValidationError as e:
+			frappe.db.rollback(save_point="employee_status")
+			result["errors"].append(f"{name}: {e}")
+			continue
+		result["updated"] += 1
+	return result
+
+
 def import_employee_master_file(path, company=None, sheet="All Employees"):
 	"""bench execute entry point: read the workbook's sheet and apply it."""
 	from openpyxl import load_workbook

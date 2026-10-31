@@ -8,7 +8,7 @@ from datetime import date, datetime
 import frappe
 
 from raysut_cement.raysut_cement.attendance.flexible import attendance_date_for, process_flexible_attendance
-from raysut_cement.raysut_cement.attendance.overtime import calculate_overtime, required_hours
+from raysut_cement.raysut_cement.attendance.overtime import calculate_overtime, recalculate_overtime, required_hours
 from raysut_cement.raysut_cement.scheduling.test_scheduling import SchedulingTestCase
 
 MONDAY, TUESDAY, WEDNESDAY, THURSDAY = date(2026, 9, 7), date(2026, 9, 8), date(2026, 9, 9), date(2026, 9, 10)
@@ -152,6 +152,31 @@ class TestOvertime(SchedulingTestCase):
 			"Attendance", {"employee": self.emp, "attendance_date": day, "docstatus": 1}, ["status", "custom_worked_hours"], as_dict=True
 		)
 		self.assertEqual((attendance.status, attendance.custom_worked_hours), ("Present", 9))
+
+	def test_recalculate_imported_history_uses_default_shift(self):
+		from raysut_cement.raysut_cement.tams_import import import_timesheet
+
+		code = f"R{frappe.generate_hash(length=5)}"
+		frappe.db.set_value("Employee", self.emp, "employee_number", code)
+		import_timesheet(
+			[
+				[code, str(MONDAY), "PR", f"{MONDAY} 07:00:00", f"{MONDAY} 20:00:00", "13", "0"],
+				[code, str(FRIDAY), "PR", f"{FRIDAY} 07:00:00", f"{FRIDAY} 12:00:00", "5", "0"],
+				[code, str(THURSDAY), "AB", "", "", "0", "0"],
+			],
+			self.company,
+		)
+		self.assertEqual(recalculate_overtime(MONDAY, FRIDAY, self.emp), 2)  # the Absent day has nothing to fill
+		values = {
+			str(a.attendance_date): (a.custom_worked_hours, a.custom_ot1_hours, a.custom_ot2_hours, a.custom_is_holiday_work)
+			for a in frappe.get_all(
+				"Attendance", {"employee": self.emp},
+				["attendance_date", "custom_worked_hours", "custom_ot1_hours", "custom_ot2_hours", "custom_is_holiday_work"],
+			)
+		}
+		self.assertEqual(values[str(MONDAY)], (13, 3, 0, 0))
+		self.assertEqual(values[str(FRIDAY)], (5, 0, 5, 1))
+		self.assertEqual(recalculate_overtime(MONDAY, FRIDAY, self.emp), 0)
 
 	# ------------------------------------------------------------ fixed shifts
 

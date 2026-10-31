@@ -6,7 +6,7 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from raysut_cement.raysut_cement.employee_master import import_employee_master
+from raysut_cement.raysut_cement.employee_master import import_employee_master, set_employee_status
 from raysut_cement.raysut_cement.tams_import import import_employees
 
 
@@ -48,3 +48,12 @@ class TestEmployeeMaster(FrappeTestCase):
 
 		again = import_employee_master(rows, self.company)
 		self.assertEqual((again["updated"], again["created"], again["renamed"]), (3, 0, []))
+
+	def test_set_status_without_date_of_birth(self):
+		code = f"S{self.tag}"
+		import_employees([[code, "Status Test", code, "Staff", "2020-01-05", "", "Active"]], self.company)
+		name = frappe.db.get_value("Employee", {"employee_number": code})
+		self.assertEqual(set_employee_status([name], "Inactive"), {"updated": 1, "errors": []})
+		self.assertEqual(frappe.db.get_value("Employee", name, "status"), "Inactive")
+		self.assertEqual(set_employee_status([name], "Inactive")["updated"], 0)
+		self.assertRaises(frappe.ValidationError, set_employee_status, [name], "Gone")

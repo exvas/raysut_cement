@@ -53,27 +53,89 @@ def get_shift(name):
 	return frappe.get_cached_value("Shift Type", name, SHIFT_FIELDS, as_dict=True) if name else None
 
 
+def overtime_values(attendance, holiday, shift_name=None):
+	"""The four overtime fields for an Attendance (doc or row), given whether its date is a holiday.
+
+	Without a shift on the Attendance (manual or imported days) the employee's shift, passed as
+	shift_name, sets the required hours.
+	"""
+	missing_punch = attendance.get("custom_missing_punch")
+	worked = 0.0 if missing_punch or attendance.status not in WORKED_STATUSES else max(flt(attendance.working_hours), 0.0)
+	holiday_work = bool(holiday) and attendance.status in WORKED_STATUSES
+
+	ot1 = ot2 = 0.0
+	if worked:
+		shift = get_shift(attendance.get("shift") or shift_name) or frappe._dict()
+		ot1, ot2 = calculate_overtime(
+			worked, required_hours(shift), shift.get("custom_ot_min_hours"), shift.get("custom_ot_max_hours"), holiday_work
+		)
+	return {
+		"custom_worked_hours": round(worked, 2),
+		"custom_is_holiday_work": 1 if holiday_work else 0,
+		"custom_ot1_hours": ot1,
+		"custom_ot2_hours": ot2,
+	}
+
+
 def set_overtime(doc, method=None):
 	"""Attendance before_save / before_submit."""
 	if not is_enabled("enable_flexible_overtime"):
 		return
+	holiday = doc.status in WORKED_STATUSES and is_holiday(doc.employee, doc.attendance_date, raise_exception=False)
+	default_shift = None if doc.shift else frappe.db.get_value("Employee", doc.employee, "default_shift")
+	doc.update(overtime_values(doc, holiday, default_shift))
 
-	worked = 0.0 if doc.get("custom_missing_punch") else max(flt(doc.working_hours), 0.0)
-	if doc.status not in WORKED_STATUSES:
-		worked = 0.0
-	holiday_work = doc.status in WORKED_STATUSES and is_holiday(doc.employee, doc.attendance_date, raise_exception=False)
 
-	ot1 = ot2 = 0.0
-	if worked and not doc.get("custom_missing_punch"):
-		shift = get_shift(doc.shift) or frappe._dict()
-		ot1, ot2 = calculate_overtime(
-			worked, required_hours(shift), shift.get("custom_ot_min_hours"), shift.get("custom_ot_max_hours"), holiday_work
+@frappe.whitelist(methods=["POST"])
+def recalculate_overtime(from_date, to_date, employee=None):
+	"""Refill the overtime fields on submitted Attendance in a date range (for example imported
+	history). Rows that already hold these values are left untouched. Returns the number changed."""
+	frappe.only_for("System Manager")
+	fields = ["custom_worked_hours", "custom_is_holiday_work", "custom_ot1_hours", "custom_ot2_hours"]
+	filters = {"docstatus": 1, "attendance_date": ("between", [from_date, to_date])}
+	if employee:
+		filters["employee"] = employee
+	rows = frappe.get_all(
+		"Attendance",
+		filters=filters,
+		fields=["name", "employee", "attendance_date", "status", "working_hours", "shift", "custom_missing_punch", *fields],
+	)
+	if not rows:
+		return 0
+
+	employees = {
+		e.name: e
+		for e in frappe.get_all(
+			"Employee",
+			{"name": ("in", list({r.employee for r in rows}))},
+			["name", "default_shift", "holiday_list", "company"],
 		)
+	}
+	company_lists = dict(frappe.get_all("Company", fields=["name", "default_holiday_list"], as_list=1))
+	list_of = {name: e.holiday_list or company_lists.get(e.company) for name, e in employees.items()}
+	holidays = {
+		(h.parent, h.holiday_date)
+		for h in frappe.get_all(
+			"Holiday",
+			filters={
+				"parent": ("in", [name for name in set(list_of.values()) if name] or [""]),
+				"holiday_date": ("between", [from_date, to_date]),
+			},
+			fields=["parent", "holiday_date"],
+		)
+	}
 
-	doc.custom_worked_hours = round(worked, 2)
-	doc.custom_is_holiday_work = 1 if holiday_work else 0
-	doc.custom_ot1_hours = ot1
-	doc.custom_ot2_hours = ot2
+	changed = 0
+	for row in rows:
+		values = overtime_values(
+			row,
+			(list_of.get(row.employee), row.attendance_date) in holidays,
+			employees[row.employee].default_shift if row.employee in employees else None,
+		)
+		if any(flt(row.get(f)) != flt(values[f]) for f in fields):
+			frappe.db.set_value("Attendance", row.name, values, update_modified=False)
+			changed += 1
+	return changed
 
 
 def validate_shift_type(doc):
