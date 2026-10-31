@@ -1,6 +1,10 @@
 """Send a TAMS export (scripts/tams_export.sh) to a site over the REST API, batch by batch.
 
 	RC_TOKEN=api_key:api_secret python3 scripts/tams_import.py https://site OUT_DIR [--company NAME]
+	RC_TOKEN=... python3 scripts/tams_import.py https://site --employee-master master.xlsx [--company NAME]
+
+--employee-master applies HR's employee master workbook ("All Employees" sheet) after the TAMS
+import: names, titles, departments/sections, shifts and ID card numbers.
 
 The token's user needs System Manager. Every batch skips what the site already has, so an
 interrupted run can simply be started again.
@@ -15,7 +19,7 @@ import time
 import urllib.error
 import urllib.request
 
-METHOD = "/api/method/raysut_cement.raysut_cement.tams_import."
+METHOD = "/api/method/raysut_cement.raysut_cement."
 
 
 # the same three helpers as raysut_cement/raysut_cement/tams_import.py, which needs frappe to import
@@ -41,6 +45,8 @@ def employee_batches(rows, size):
 
 
 def call(site, method, **kwargs):
+	"""method: a tams_import function, or module.function under raysut_cement.raysut_cement"""
+	method = method if "." in method else f"tams_import.{method}"
 	request = urllib.request.Request(
 		site.rstrip("/") + METHOD + method,
 		data=json.dumps(kwargs).encode(),
@@ -63,10 +69,25 @@ def call(site, method, **kwargs):
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("site")
-	parser.add_argument("path")
+	parser.add_argument("path", nargs="?")
 	parser.add_argument("--company")
 	parser.add_argument("--only", choices=["employees", "checkins", "timesheet"])
+	parser.add_argument("--employee-master", metavar="XLSX")
 	args = parser.parse_args()
+
+	if args.employee_master:
+		from openpyxl import load_workbook
+
+		sheet = load_workbook(args.employee_master, read_only=True, data_only=True)["All Employees"]
+		rows = [list(r[:7]) for r in list(sheet.iter_rows(values_only=True))[1:] if any(r)]
+		result = call(args.site, "employee_master.import_employee_master", rows=rows, company=args.company)
+		print(
+			f"employee master: {result['updated']} updated, {result['created']} created, "
+			f"{len(result['renamed'])} renamed, {len(result['active_not_in_master'])} active employees not in the workbook"
+		)
+		for error in result["errors"]:
+			print("  error:", error)
+		return
 
 	if args.only in (None, "employees"):
 		result = call(args.site, "import_employees", rows=read_tsv(args.path, "employees.tsv"), company=args.company)

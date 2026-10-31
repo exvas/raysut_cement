@@ -49,6 +49,7 @@ doctype_js = {
 	"Employee Checkin": "public/js/employee_checkin.js",
 	"Shift Type": "public/js/shift_type.js",
 }
+doctype_list_js = {"Attendance": "public/js/attendance_list.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -288,3 +289,16 @@ boot_session = "raysut_cement.raysut_cement.settings.boot_session"
 override_doctype_class = {"Shift Type": "raysut_cement.raysut_cement.overrides.shift_type.CustomShiftType"}
 
 scheduler_events["daily"].append("raysut_cement.raysut_cement.scheduling.generator.daily_generation")
+
+# Flexible Shift & Overtime (attendance/README.md)
+# ------------------------------------------------
+ATTENDANCE = "raysut_cement.raysut_cement.attendance"
+
+doc_events = {
+	"Attendance": {
+		"before_save": f"{ATTENDANCE}.overtime.set_overtime",
+		"before_submit": f"{ATTENDANCE}.overtime.set_overtime",
+	}
+}
+
+scheduler_events["hourly"].append(f"{ATTENDANCE}.flexible.hourly_flexible_attendance")

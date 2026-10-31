@@ -3,13 +3,15 @@
 
 """Shift Type ("Timetable") with Normal / Flexible modes and Break Timetables."""
 
-from datetime import date
+from datetime import date, datetime, timedelta
 
 import frappe
 from frappe import _
-from frappe.utils import cint, flt
+from frappe.utils import cint, flt, get_time
 from hrms.hr.doctype.shift_type.shift_type import ShiftType
 
+from raysut_cement.raysut_cement.attendance.flexible import process_flexible_attendance
+from raysut_cement.raysut_cement.attendance.overtime import validate_shift_type
 from raysut_cement.raysut_cement.scheduling.timetable import (
 	DAY_OFFSET,
 	break_deduction_minutes,
@@ -37,6 +39,10 @@ FLEXIBLE_IGNORED_FIELDS = (
 
 class CustomShiftType(ShiftType):
 	def validate(self):
+		if is_enabled("enable_flexible_overtime"):
+			validate_shift_type(self)
+			if self.get("custom_is_flexible_shift"):
+				self.apply_day_start_window()
 		if not is_enabled("enable_timetable_rules"):
 			return super().validate()
 		if is_flexible(self):
@@ -54,6 +60,15 @@ class CustomShiftType(ShiftType):
 			frappe.throw(_("Valid Period Start and End are required for a Flexible timetable"))
 		self.start_time = self.valid_period_start
 		self.end_time = self.valid_period_end
+		for field in FLEXIBLE_IGNORED_FIELDS:
+			self.set(field, 0)
+
+	def apply_day_start_window(self):
+		"""A day-start flexible shift spans a whole day: Day Start to one minute before the next one.
+		Core still needs start/end (and no buffers, or the shift would overlap itself)."""
+		start = datetime.combine(date(2000, 1, 3), get_time(self.custom_day_start_time))
+		self.start_time = start.time().strftime("%H:%M:%S")
+		self.end_time = (start - timedelta(minutes=1)).time().strftime("%H:%M:%S")
 		for field in FLEXIBLE_IGNORED_FIELDS:
 			self.set(field, 0)
 
@@ -98,6 +113,22 @@ class CustomShiftType(ShiftType):
 			fixed.append((brk.name, b_start, b_end))
 
 	# ------------------------------------------------------------ attendance
+
+	def is_day_start_flexible(self):
+		return bool(self.get("custom_is_flexible_shift")) and is_enabled("enable_flexible_overtime")
+
+	def process_auto_attendance(self, *args, **kwargs):
+		"""A flexible shift marks its days from punches first, so core's absent marking that follows
+		only sees days that really had no punches."""
+		if self.is_day_start_flexible():
+			process_flexible_attendance(shift_types=[self.name])
+		return super().process_auto_attendance(*args, **kwargs)
+
+	def should_mark_attendance(self, employee, attendance_date):
+		"""Punches on a weekly off or public holiday still make an Attendance (their hours are OT2)."""
+		if is_enabled("enable_flexible_overtime"):
+			return True
+		return super().should_mark_attendance(employee, attendance_date)
 
 	def get_attendance(self, logs, *thresholds):
 		"""Normal: core result with breaks deducted. Flexible: minimum-work-time rules.
@@ -144,6 +175,8 @@ class CustomShiftType(ShiftType):
 
 	def _process(self, logs):
 		"""Core flow (v15 or v16) unchanged, then the Raysut fields on the Attendance it created."""
+		if self.is_day_start_flexible():
+			return  # attendance/flexible.py marks these days from the Day Start windows
 		self._attendance_details = {}
 		super()._process(logs)
 		if is_enabled("enable_timetable_rules"):

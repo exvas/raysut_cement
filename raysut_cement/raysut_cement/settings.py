@@ -7,7 +7,13 @@ import frappe
 from frappe.utils import cint
 
 DOCTYPE = "Raysut Attendance Settings"
-FEATURES = ("enable_crosschex", "enable_shift_scheduling", "enable_timetable_rules", "enable_checkin_summary")
+FEATURES = (
+	"enable_crosschex",
+	"enable_shift_scheduling",
+	"enable_timetable_rules",
+	"enable_checkin_summary",
+	"enable_flexible_overtime",
+)
 
 
 def is_enabled(feature):

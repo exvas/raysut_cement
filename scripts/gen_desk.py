@@ -26,6 +26,7 @@ SPEC = {
 				("doctype", "Attendance", "Attendance", "user-check"),
 				("doctype", "Shift Assignment", "Shift Assignment", "calendar-days"),
 				("section", "Reports", "notepad-text", [
+					("report", "Consolidated Attendance", "Consolidated Attendance"),
 					("report", "Shift Roster", "Shift Roster"),
 					("report", "Flexible Shift Work Hours", "Flexible Shift Work Hours"),
 					("report", "Monthly Attendance Sheet", "Monthly Attendance Sheet"),

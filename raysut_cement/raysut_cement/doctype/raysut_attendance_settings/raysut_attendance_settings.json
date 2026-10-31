@@ -9,7 +9,8 @@
   "enable_shift_scheduling",
   "column_break_features",
   "enable_timetable_rules",
-  "enable_checkin_summary"
+  "enable_checkin_summary",
+  "enable_flexible_overtime"
  ],
  "fields": [
   {
@@ -49,11 +50,18 @@
    "label": "Show Punch Summary on Employee Checkin",
    "default": "1",
    "description": "Table of the same day's punches on the Employee Checkin form."
+  },
+  {
+   "fieldname": "enable_flexible_overtime",
+   "fieldtype": "Check",
+   "label": "Flexible Shift & Overtime",
+   "default": "1",
+   "description": "Day-start flexible shifts, OT1 / OT2 on Attendance, and attendance from punches on holidays."
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-10-27 20:00:00.000000",
+ "modified": "2026-10-31 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Raysut Cement",
  "name": "Raysut Attendance Settings",
