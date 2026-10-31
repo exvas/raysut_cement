@@ -198,9 +198,11 @@ class CustomShiftType(ShiftType):
 
 	def update_attendance_details(self):
 		for (employee, attendance_date), details in self._attendance_details.items():
-			attendance = frappe.db.get_value(
-				"Attendance", {"employee": employee, "attendance_date": attendance_date, "shift": self.name, "docstatus": 1}
-			)
+			attendance, holiday_work = frappe.db.get_value(
+				"Attendance",
+				{"employee": employee, "attendance_date": attendance_date, "shift": self.name, "docstatus": 1},
+				["name", "custom_is_holiday_work"],
+			) or (None, 0)
 			if not attendance:
 				continue
 			values = {"late_minutes": cint(details.get("late_minutes"))}
@@ -219,7 +221,8 @@ class CustomShiftType(ShiftType):
 					{
 						"flexi_shift_applied": 1,
 						"expected_checkout_time": details.expected_checkout_time,
-						"under_time_minutes": details.under_time_minutes,
+						# work on a weekly off or holiday is all OT2, never short
+						"under_time_minutes": 0 if holiday_work else details.under_time_minutes,
 						"custom_missing_punch": 1 if details.missing_punch else 0,
 					}
 				)

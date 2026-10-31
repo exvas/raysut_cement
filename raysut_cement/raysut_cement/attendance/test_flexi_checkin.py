@@ -111,6 +111,28 @@ class TestFlexiCheckin(SchedulingTestCase):
 		# status and late marking are core's; under time (7 of 8 hours) is reported for every shift
 		self.assertEqual((attendance.flexi_shift_applied, attendance.under_time_minutes, attendance.late_minutes), (0, 60, 60))
 
+	def test_weekly_off_work_is_ot2_without_under_time(self):
+		friday = date(2026, 9, 11)
+		holidays = frappe.get_doc(
+			{"doctype": "Holiday List", "holiday_list_name": f"RC Flexi Holidays {frappe.generate_hash(length=4)}",
+			 "from_date": "2026-01-01", "to_date": "2026-12-31",
+			 "holidays": [{"holiday_date": friday, "description": "Friday", "weekly_off": 1}]}
+		).insert()
+		shift = self.general_shift()
+		employee = self.employee(holiday_list=holidays.name)
+		self.assign_shift(employee, shift.name, friday)
+		for hh_mm in ("07:00", "13:00"):
+			self.punch(employee, datetime.combine(friday, datetime.strptime(hh_mm, "%H:%M").time()))
+		self.process(shift.name, datetime(2026, 9, 13))
+		attendance = frappe.db.get_value(
+			"Attendance", {"employee": employee, "attendance_date": friday, "docstatus": 1},
+			["custom_is_holiday_work", "custom_ot2_hours", "custom_ot1_hours", "under_time_minutes"], as_dict=True,
+		)
+		self.assertEqual(
+			(attendance.custom_is_holiday_work, attendance.custom_ot2_hours, attendance.custom_ot1_hours, attendance.under_time_minutes),
+			(1, 6, 0, 0),
+		)
+
 	# ------------------------------------------------------------ settings
 
 	def test_flexible_check_in_validation(self):
