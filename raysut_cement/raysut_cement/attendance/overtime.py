@@ -6,10 +6,12 @@
 The rules are in README.md next to this file.
 """
 
+import math
+
 import frappe
 from erpnext.setup.doctype.employee.employee import is_holiday
 from frappe import _
-from frappe.utils import flt, to_timedelta
+from frappe.utils import cint, flt, to_timedelta
 
 from raysut_cement.raysut_cement.settings import is_enabled
 
@@ -22,6 +24,18 @@ SHIFT_FIELDS = (
 	"custom_required_working_hours",
 	"custom_ot_min_hours",
 	"custom_ot_max_hours",
+	"ot_policy",
+	"enable_flexible_checkin",
+	"flexi_required_hours",
+)
+POLICY_FIELDS = (
+	"min_ot_minutes",
+	"rounding_minutes",
+	"rounding_method",
+	"max_ot1_hours",
+	"move_to_ot2_after_hours",
+	"ot2_on_holidays",
+	"max_ot2_hours",
 )
 
 
@@ -39,8 +53,55 @@ def calculate_overtime(worked_hours, required_hours, ot_min_hours=0, ot_max_hour
 	return round(extra, 2), 0.0
 
 
+def round_hours(hours, policy):
+	"""Round to the policy's 15 / 30 / 60 minutes, down, to the nearest or up."""
+	step = cint(policy.get("rounding_minutes"))
+	if not step:
+		return round(hours, 2)
+	method = {"Up": math.ceil, "Nearest": lambda x: math.floor(x + 0.5)}.get(policy.get("rounding_method"), math.floor)
+	return round(method(round(hours * 60, 6) / step) * step / 60, 2)
+
+
+def calculate_policy_overtime(worked_hours, required_hours, policy, holiday=False):
+	"""Return (ot1, ot2) under an OT Policy."""
+	worked_hours = max(flt(worked_hours), 0.0)
+	if holiday and cint(policy.get("ot2_on_holidays")):
+		ot2 = round_hours(worked_hours, policy)
+		cap = flt(policy.get("max_ot2_hours"))
+		return 0.0, round(min(ot2, cap) if cap else ot2, 2)
+
+	extra = worked_hours - flt(required_hours)
+	if extra <= 0 or extra * 60 < cint(policy.get("min_ot_minutes")):
+		return 0.0, 0.0
+	ot1, ot2 = round_hours(extra, policy), 0.0
+	move_after = flt(policy.get("move_to_ot2_after_hours"))
+	if move_after and ot1 > move_after:
+		ot1, ot2 = move_after, ot1 - move_after
+	if flt(policy.get("max_ot1_hours")):
+		ot1 = min(ot1, flt(policy.max_ot1_hours))
+	if flt(policy.get("max_ot2_hours")):
+		ot2 = min(ot2, flt(policy.max_ot2_hours))
+	return round(ot1, 2), round(ot2, 2)
+
+
+def get_policy(name):
+	return frappe.get_cached_value("OT Policy", name, POLICY_FIELDS, as_dict=True) if name else None
+
+
+def shift_overtime(worked, shift, holiday):
+	"""(ot1, ot2) for worked hours on a shift: its OT Policy if it has one, else OT Min / Max."""
+	policy = get_policy(shift.get("ot_policy"))
+	if policy:
+		return calculate_policy_overtime(worked, required_hours(shift), policy, holiday)
+	return calculate_overtime(
+		worked, required_hours(shift), shift.get("custom_ot_min_hours"), shift.get("custom_ot_max_hours"), holiday
+	)
+
+
 def required_hours(shift):
-	"""Required Working Hours, else the start-end duration of a fixed shift."""
+	"""Flexible check-in or Required Working Hours, else the start-end duration of a fixed shift."""
+	if shift.get("enable_flexible_checkin") and flt(shift.get("flexi_required_hours")) > 0:
+		return flt(shift.flexi_required_hours)
 	if flt(shift.get("custom_required_working_hours")) > 0:
 		return flt(shift.custom_required_working_hours)
 	if shift.get("custom_is_flexible_shift") or not (shift.get("start_time") and shift.get("end_time")):
@@ -66,9 +127,7 @@ def overtime_values(attendance, holiday, shift_name=None):
 	ot1 = ot2 = 0.0
 	if worked:
 		shift = get_shift(attendance.get("shift") or shift_name) or frappe._dict()
-		ot1, ot2 = calculate_overtime(
-			worked, required_hours(shift), shift.get("custom_ot_min_hours"), shift.get("custom_ot_max_hours"), holiday_work
-		)
+		ot1, ot2 = shift_overtime(worked, shift, holiday_work)
 	return {
 		"custom_worked_hours": round(worked, 2),
 		"custom_is_holiday_work": 1 if holiday_work else 0,

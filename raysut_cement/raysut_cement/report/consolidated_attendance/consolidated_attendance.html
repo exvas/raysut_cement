@@ -1,0 +1,84 @@
+{%
+	var paper = (filters.paper_size || "A3");
+	var columns_shown = columns.filter(function(c) { return !c.hidden; });
+	var leave_columns = columns_shown.filter(function(c) { return c.fieldname.indexOf("leave_") === 0; });
+	var applied = [];
+	["company", "branch", "department", "shift_type", "employee", "employment_type", "status", "group_by"].forEach(function(key) {
+		if (filters[key]) { applied.push(frappe.unscrub(key) + ": " + filters[key]); }
+	});
+	var legend = [["PR", "Present (Half Day counts 0.5)"], ["AB", "Absent"], ["WO", "Weekly Off"], ["HL", "Public Holiday"],
+		["NM", "Not Marked: no attendance, leave or holiday"], ["LV", "Leave without a leave type"]];
+	leave_columns.forEach(function(c) { legend.push([c.label, "Leave"]); });
+%}
+<style>
+	/* read by Frappe's PDF generator */
+	.print-format { page-size: {%= paper %}; orientation: Landscape; margin-top: 10mm; margin-bottom: 18mm; margin-left: 6mm; margin-right: 6mm; }
+	.rc-report { font-size: 8px; }
+	.rc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+	.rc-head img { height: 42px; }
+	.rc-head h2 { margin: 0; font-size: 15px; }
+	.rc-meta { font-size: 9px; color: #555; }
+	.rc-table { width: 100%; border-collapse: collapse; table-layout: auto; }
+	.rc-table thead { display: table-header-group; }
+	.rc-table tr { page-break-inside: avoid; }
+	.rc-table th, .rc-table td { border: 1px solid #999; padding: 2px 3px; text-align: right; white-space: nowrap; }
+	.rc-table th { background: #eee; text-align: center; }
+	.rc-table td.text { text-align: left; white-space: normal; }
+	.rc-table tr.total td { font-weight: bold; background: #f4f4f4; }
+	.rc-table tr.unbalanced td { color: #c0392b; font-weight: bold; }
+	.rc-legend { margin-top: 10px; font-size: 8px; columns: 3; }
+	.rc-sign { display: flex; justify-content: space-between; margin-top: 40px; font-size: 10px; page-break-inside: avoid; }
+	.rc-sign div { width: 28%; border-top: 1px solid #333; text-align: center; padding-top: 4px; }
+</style>
+
+<div class="rc-report">
+	<div class="rc-head">
+		<img src="/assets/raysut_cement/images/raysut-cement-logo.svg">
+		<div style="text-align:center; flex:1;">
+			<h2>{%= __("Consolidated Monthly Attendance Report") %}</h2>
+			<div>{%= frappe.datetime.str_to_user(filters.from_date) %} &ndash; {%= frappe.datetime.str_to_user(filters.to_date) %}</div>
+			<div class="rc-meta">{%= applied.join(" | ") %}</div>
+		</div>
+		<div class="rc-meta" style="text-align:right;">
+			{%= __("Printed by") %}: {%= frappe.session.user_fullname %}<br>
+			{%= __("Printed on") %}: {%= frappe.datetime.str_to_user(frappe.datetime.now_datetime()) %}
+		</div>
+	</div>
+
+	<table class="rc-table">
+		<thead>
+			<tr>{% for (var c = 0; c < columns_shown.length; c++) { %}<th>{%= columns_shown[c].label %}</th>{% } %}</tr>
+		</thead>
+		<tbody>
+			{% for (var i = 0; i < data.length; i++) { var row = data[i]; %}
+			<tr class="{%= row.is_total ? 'total' : '' %} {%= !row.balanced ? 'unbalanced' : '' %}">
+				{% for (var c = 0; c < columns_shown.length; c++) {
+					var col = columns_shown[c], value = row[col.fieldname];
+					var text = ["Data", "Link"].indexOf(col.fieldtype) !== -1;
+					if (value === undefined || value === null) { value = ""; }
+					else if (col.fieldtype === "Float") { value = flt(value, col.precision || 1); }
+				%}
+				<td class="{%= text ? 'text' : '' %}">{%= value %}</td>
+				{% } %}
+			</tr>
+			{% } %}
+		</tbody>
+	</table>
+
+	<div class="rc-legend">
+		{% for (var l = 0; l < legend.length; l++) { %}<div><b>{%= legend[l][0] %}</b> = {%= legend[l][1] %}</div>{% } %}
+		<div>{%= __("Durations are HH:MM. A row in red does not add up to the days in the period.") %}</div>
+	</div>
+
+	<div class="rc-sign">
+		<div>{%= __("Prepared by") %}</div>
+		<div>{%= __("Checked by") %}</div>
+		<div>{%= __("Approved by") %}</div>
+	</div>
+</div>
+
+<div id="footer-html" class="visible-pdf">
+	<p class="text-center small" style="font-size:9px;">
+		{%= __("Page") %} <span class="page"></span> {%= __("of") %} <span class="topage"></span>
+	</p>
+</div>

@@ -10,6 +10,7 @@ from frappe import _
 from frappe.utils import cint, flt, get_time
 from hrms.hr.doctype.shift_type.shift_type import ShiftType
 
+from raysut_cement.raysut_cement.attendance import flexi_checkin
 from raysut_cement.raysut_cement.attendance.flexible import process_flexible_attendance
 from raysut_cement.raysut_cement.attendance.overtime import validate_shift_type
 from raysut_cement.raysut_cement.scheduling.timetable import (
@@ -41,6 +42,7 @@ class CustomShiftType(ShiftType):
 	def validate(self):
 		if is_enabled("enable_flexible_overtime"):
 			validate_shift_type(self)
+			flexi_checkin.validate_shift_type(self)
 			if self.get("custom_is_flexible_shift"):
 				self.apply_day_start_window()
 		if not is_enabled("enable_timetable_rules"):
@@ -117,6 +119,9 @@ class CustomShiftType(ShiftType):
 	def is_day_start_flexible(self):
 		return bool(self.get("custom_is_flexible_shift")) and is_enabled("enable_flexible_overtime")
 
+	def is_flexi_checkin(self):
+		return bool(self.get("enable_flexible_checkin")) and is_enabled("enable_flexible_overtime")
+
 	def process_auto_attendance(self, *args, **kwargs):
 		"""A flexible shift marks its days from punches first, so core's absent marking that follows
 		only sees days that really had no punches."""
@@ -131,19 +136,25 @@ class CustomShiftType(ShiftType):
 		return super().should_mark_attendance(employee, attendance_date)
 
 	def get_attendance(self, logs, *thresholds):
-		"""Normal: core result with breaks deducted. Flexible: minimum-work-time rules.
+		"""Flexible check-in: expected end follows the check-in. Normal: core result with breaks
+		deducted. Flexible timetable: minimum-work-time rules.
 
 		HRMS v16 passes (absent, half day) thresholds, already halved on half holidays; v15 passes none.
 		"""
-		if not is_enabled("enable_timetable_rules"):
-			return super().get_attendance(logs, *thresholds)
-
 		attendance_date = logs[0].shift_start.date()
-		breaks = get_breaks(self)
 
-		if is_flexible(self):
-			result = evaluate_flexible(self, logs, attendance_date, breaks)
+		if self.is_flexi_checkin():
+			result = flexi_checkin.evaluate(self, logs, lambda hours: self.status_for_hours(hours, *thresholds))
+		elif not is_enabled("enable_timetable_rules"):
+			status, hours, late_entry, early_exit, in_time, out_time = super().get_attendance(logs, *thresholds)
+			result = frappe._dict(
+				status=status, working_hours=hours, late_entry=late_entry, early_exit=early_exit,
+				in_time=in_time, out_time=out_time, break_minutes=0, required_hours=None, remarks=None,
+			)
+		elif is_flexible(self):
+			result = evaluate_flexible(self, logs, attendance_date, get_breaks(self))
 		else:
+			breaks = get_breaks(self)
 			status, hours, late_entry, early_exit, in_time, out_time = super().get_attendance(logs, *thresholds)
 			result = frappe._dict(
 				status=status, working_hours=hours, late_entry=late_entry, early_exit=early_exit,
@@ -155,6 +166,10 @@ class CustomShiftType(ShiftType):
 				result.break_minutes = break_deduction_minutes(breaks, intervals, window_start)
 				result.working_hours = max(0.0, round(hours - result.break_minutes / 60, 2))
 				result.status = self.status_for_hours(result.working_hours, *thresholds)
+
+		if not result.get("flexi") and result.late_entry and result.in_time:
+			# minutes late against the shift start, for the attendance reports
+			result.late_minutes = max(0, int((result.in_time - logs[0].shift_start).total_seconds() // 60))
 
 		self.__dict__.setdefault("_attendance_details", {})[(logs[0].employee, attendance_date)] = result
 		return (
@@ -179,8 +194,7 @@ class CustomShiftType(ShiftType):
 			return  # attendance/flexible.py marks these days from the Day Start windows
 		self._attendance_details = {}
 		super()._process(logs)
-		if is_enabled("enable_timetable_rules"):
-			self.update_attendance_details()
+		self.update_attendance_details()
 
 	def update_attendance_details(self):
 		for (employee, attendance_date), details in self._attendance_details.items():
@@ -189,18 +203,27 @@ class CustomShiftType(ShiftType):
 			)
 			if not attendance:
 				continue
-			frappe.db.set_value(
-				"Attendance",
-				attendance,
-				{
-					"shift_mode": self.shift_mode or "Normal",
-					"shift_pattern": get_shift_pattern(employee, self.name, attendance_date),
-					"required_work_hours": details.required_hours,
-					"break_deducted_minutes": cint(details.break_minutes),
-					"flexible_remarks": details.remarks,
-				},
-				update_modified=False,
-			)
+			values = {"late_minutes": cint(details.get("late_minutes"))}
+			if is_enabled("enable_timetable_rules") or details.get("flexi"):
+				values.update(
+					{
+						"shift_mode": self.shift_mode or "Normal",
+						"shift_pattern": get_shift_pattern(employee, self.name, attendance_date),
+						"required_work_hours": details.required_hours,
+						"break_deducted_minutes": cint(details.break_minutes),
+						"flexible_remarks": details.remarks,
+					}
+				)
+			if details.get("flexi"):
+				values.update(
+					{
+						"flexi_shift_applied": 1,
+						"expected_checkout_time": details.expected_checkout_time,
+						"under_time_minutes": details.under_time_minutes,
+						"custom_missing_punch": 1 if details.missing_punch else 0,
+					}
+				)
+			frappe.db.set_value("Attendance", attendance, values, update_modified=False)
 		self._attendance_details = {}
 		if not frappe.flags.in_test:
 			frappe.db.commit()  # nosemgrep - core commits the attendance itself; keep the details with it

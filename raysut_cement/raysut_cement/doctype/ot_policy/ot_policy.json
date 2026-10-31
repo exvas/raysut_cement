@@ -1,0 +1,167 @@
+{
+ "actions": [],
+ "creation": "2026-10-31 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "links": [],
+ "modified": "2026-10-31 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Raysut Cement",
+ "name": "OT Policy",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "HR Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "HR User",
+   "read": 1,
+   "report": 1,
+   "print": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "field:policy_name",
+ "naming_rule": "By fieldname",
+ "title_field": "policy_name",
+ "fields": [
+  {
+   "fieldname": "policy_name",
+   "fieldtype": "Data",
+   "label": "Policy Name",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "ot1_section",
+   "fieldtype": "Section Break",
+   "label": "OT1 (Normal Days)"
+  },
+  {
+   "fieldname": "min_ot_minutes",
+   "fieldtype": "Int",
+   "label": "Minimum OT (Minutes)",
+   "non_negative": 1,
+   "description": "Extra time below this is not overtime."
+  },
+  {
+   "fieldname": "rounding_minutes",
+   "fieldtype": "Select",
+   "label": "Round OT To",
+   "options": "\n15\n30\n60",
+   "description": "Round each day's overtime to this many minutes. Blank = no rounding."
+  },
+  {
+   "fieldname": "rounding_method",
+   "fieldtype": "Select",
+   "label": "Rounding",
+   "options": "Down\nNearest\nUp",
+   "default": "Down",
+   "depends_on": "rounding_minutes"
+  },
+  {
+   "fieldname": "column_break_ot1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "max_ot1_hours",
+   "fieldtype": "Float",
+   "label": "Max OT1 per Day (Hours)",
+   "non_negative": 1,
+   "description": "0 = no cap."
+  },
+  {
+   "fieldname": "move_to_ot2_after_hours",
+   "fieldtype": "Float",
+   "label": "Move OT1 Beyond (Hours) to OT2",
+   "non_negative": 1,
+   "description": "OT1 above this many hours in a day is paid as OT2. 0 = off."
+  },
+  {
+   "fieldname": "ot1_rate",
+   "fieldtype": "Float",
+   "label": "OT1 Rate",
+   "default": "1.25",
+   "non_negative": 1,
+   "description": "Multiplier for payroll, e.g. 1.25. Shown in exports; not applied to hours."
+  },
+  {
+   "fieldname": "ot2_section",
+   "fieldtype": "Section Break",
+   "label": "OT2 (Weekly Off and Public Holidays)"
+  },
+  {
+   "fieldname": "ot2_on_holidays",
+   "fieldtype": "Check",
+   "label": "Holiday Work is OT2",
+   "default": "1",
+   "description": "All hours worked on a weekly off or public holiday are OT2. Off: such a day is treated like a normal day."
+  },
+  {
+   "fieldname": "max_ot2_hours",
+   "fieldtype": "Float",
+   "label": "Max OT2 per Day (Hours)",
+   "non_negative": 1,
+   "description": "0 = no cap."
+  },
+  {
+   "fieldname": "column_break_ot2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ot2_rate",
+   "fieldtype": "Float",
+   "label": "OT2 Rate",
+   "default": "1.5",
+   "non_negative": 1,
+   "description": "Multiplier for payroll, e.g. 1.5. Shown in exports; not applied to hours."
+  }
+ ],
+ "field_order": [
+  "policy_name",
+  "description",
+  "ot1_section",
+  "min_ot_minutes",
+  "rounding_minutes",
+  "rounding_method",
+  "column_break_ot1",
+  "max_ot1_hours",
+  "move_to_ot2_after_hours",
+  "ot1_rate",
+  "ot2_section",
+  "ot2_on_holidays",
+  "max_ot2_hours",
+  "column_break_ot2",
+  "ot2_rate"
+ ]
+}

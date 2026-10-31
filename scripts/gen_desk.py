@@ -27,6 +27,8 @@ SPEC = {
 				("doctype", "Shift Assignment", "Shift Assignment", "calendar-days"),
 				("section", "Reports", "notepad-text", [
 					("report", "Consolidated Attendance", "Consolidated Attendance"),
+					("report", "Daily Attendance", "Daily Attendance"),
+					("report", "Under Time", "Under Time"),
 					("report", "Shift Roster", "Shift Roster"),
 					("report", "Flexible Shift Work Hours", "Flexible Shift Work Hours"),
 					("report", "Monthly Attendance Sheet", "Monthly Attendance Sheet"),
@@ -44,6 +46,7 @@ SPEC = {
 				("doctype", "Shift", "Shift Pattern", "layers"),
 				("doctype", "Timetable", "Shift Type", "clock"),
 				("doctype", "Break Timetable", "Break Timetable", "coffee"),
+				("doctype", "OT Policy", "OT Policy", "timer"),
 			],
 		},
 		{
