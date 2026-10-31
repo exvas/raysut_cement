@@ -89,13 +89,21 @@ def get_policy(name):
 
 
 def shift_overtime(worked, shift, holiday):
-	"""(ot1, ot2) for worked hours on a shift: its OT Policy if it has one, else OT Min / Max."""
+	"""(ot1, ot2) for worked hours on a shift: its OT Policy if it has one, else OT Min / Max.
+
+	Without a shift (or one with no working hours) there is nothing to be over, so no OT1: an
+	employee with no shift assigned would otherwise get every hour as overtime. Holiday work is
+	still OT2.
+	"""
+	required = required_hours(shift)
 	policy = get_policy(shift.get("ot_policy"))
 	if policy:
-		return calculate_policy_overtime(worked, required_hours(shift), policy, holiday)
-	return calculate_overtime(
-		worked, required_hours(shift), shift.get("custom_ot_min_hours"), shift.get("custom_ot_max_hours"), holiday
-	)
+		ot1, ot2 = calculate_policy_overtime(worked, required, policy, holiday)
+	else:
+		ot1, ot2 = calculate_overtime(
+			worked, required, shift.get("custom_ot_min_hours"), shift.get("custom_ot_max_hours"), holiday
+		)
+	return (ot1 if required > 0 else 0.0), ot2
 
 
 def required_hours(shift):

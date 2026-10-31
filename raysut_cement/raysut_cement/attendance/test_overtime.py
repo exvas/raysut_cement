@@ -178,6 +178,18 @@ class TestOvertime(SchedulingTestCase):
 		self.assertEqual(values[str(FRIDAY)], (5, 0, 5, 1))
 		self.assertEqual(recalculate_overtime(MONDAY, FRIDAY, self.emp), 0)
 
+	def test_employee_without_a_shift_gets_no_ot1(self):
+		employee = self.employee(holiday_list=self.holidays)
+		values = {}
+		for day in (MONDAY, FRIDAY):
+			doc = frappe.get_doc(
+				{"doctype": "Attendance", "employee": employee, "attendance_date": day, "status": "Present",
+				 "working_hours": 9, "company": self.company}
+			).insert()
+			values[day] = (doc.custom_worked_hours, doc.custom_ot1_hours, doc.custom_ot2_hours)
+		self.assertEqual(values[MONDAY], (9, 0, 0))  # no shift: no basic hours to be over
+		self.assertEqual(values[FRIDAY], (9, 0, 9))  # holiday work is still OT2
+
 	# ------------------------------------------------------------ fixed shifts
 
 	def test_fixed_shift_ot_and_holiday_punches_are_not_skipped(self):
