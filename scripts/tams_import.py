@@ -17,6 +17,7 @@ import os
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 METHOD = "/api/method/raysut_cement.raysut_cement."
@@ -66,6 +67,18 @@ def call(site, method, **kwargs):
 		time.sleep(5 * (attempt + 1))
 
 
+def active_employee_numbers(site, company=None):
+	filters = [["status", "=", "Active"]] + ([["company", "=", company]] if company else [])
+	query = urllib.parse.urlencode(
+		{"filters": json.dumps(filters), "fields": json.dumps(["employee_number"]), "limit_page_length": 0}
+	)
+	request = urllib.request.Request(
+		f"{site.rstrip('/')}/api/resource/Employee?{query}", headers={"Authorization": f"token {os.environ['RC_TOKEN']}"}
+	)
+	with urllib.request.urlopen(request, timeout=120) as response:
+		return [row["employee_number"] for row in json.load(response)["data"]]
+
+
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("site")
@@ -80,18 +93,28 @@ def main():
 
 		sheet = load_workbook(args.employee_master, read_only=True, data_only=True)["All Employees"]
 		rows = [list(r[:7]) for r in list(sheet.iter_rows(values_only=True))[1:] if any(r)]
-		result = call(args.site, "employee_master.import_employee_master", rows=rows, company=args.company)
-		print(
-			f"employee master: {result['updated']} updated, {result['created']} created, "
-			f"{len(result['renamed'])} renamed, {len(result['active_not_in_master'])} active employees not in the workbook"
-		)
-		for error in result["errors"]:
-			print("  error:", error)
+		totals = {"updated": 0, "created": 0, "renamed": 0}
+		for i, batch in enumerate(batches(rows, 25)):
+			result = call(args.site, "employee_master.import_employee_master", rows=batch, company=args.company)
+			for key in totals:
+				totals[key] += len(result[key]) if key == "renamed" else result[key]
+			for error in result["errors"]:
+				print("  error:", error)
+			print(f"employee master {min((i + 1) * 25, len(rows))}/{len(rows)}: {totals}", flush=True)
+		in_master = {str(r[0]) for r in rows if r[0] is not None}
+		active = active_employee_numbers(args.site, args.company)
+		print("active employees not in the workbook:", len([n for n in active if n not in in_master]))
 		return
 
 	if args.only in (None, "employees"):
-		result = call(args.site, "import_employees", rows=read_tsv(args.path, "employees.tsv"), company=args.company)
-		print("employees", result)
+		# about a second per employee on the server: small batches stay inside the gateway timeout
+		rows, created = read_tsv(args.path, "employees.tsv"), 0
+		for i, batch in enumerate(batches(rows, 25)):
+			result = call(args.site, "import_employees", rows=batch, company=args.company)
+			created += result["created"]
+			for error in result["errors"]:
+				print("  error:", error)
+			print(f"employees {min((i + 1) * 25, len(rows))}/{len(rows)} read, {created} created", flush=True)
 
 	if args.only in (None, "checkins"):
 		rows = sorted(read_tsv(args.path, "checkins.tsv"), key=lambda row: row[1])
