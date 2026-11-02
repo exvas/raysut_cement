@@ -6,10 +6,6 @@
 	frappe.pages["raysut-dashboard"].on_page_load = function (wrapper) {
 		const page = frappe.ui.make_app_page({ parent: wrapper, title: __("Attendance Dashboard"), single_column: true });
 		$(wrapper).addClass("rd-page");
-		if (!document.getElementById("rd-font")) {
-			$("head").append(`<link id="rd-font" rel="stylesheet"
-				href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&display=swap">`);
-		}
 		wrapper.raysut_dashboard = new RaysutDashboard(page);
 	};
 
@@ -21,10 +17,10 @@
 
 	// status colours, the same on the donut, tiles, table and bars
 	const TONES = {
-		present: { main: "#22B07D", label: __("Present") },
-		absent: { main: "#FF7A6E", label: __("Absent") },
-		on_leave: { main: "#5AA9F5", label: __("On leave") },
-		not_marked: { main: "#FFC145", label: __("Not marked") },
+		present: { main: "var(--green-500)", chart: "green", label: __("Present") },
+		absent: { main: "var(--red-500)", chart: "red", label: __("Absent") },
+		on_leave: { main: "var(--blue-500)", chart: "blue", label: __("On leave") },
+		not_marked: { main: "var(--yellow-500)", chart: "yellow", label: __("Not marked") },
 	};
 
 	// line icons (Lucide style, 24px grid)
@@ -57,6 +53,19 @@
 			this.charts = {};
 			this.date = frappe.datetime.get_today();
 			this.company = frappe.defaults.get_user_default("Company");
+			this.company_field = page.add_field({
+				fieldname: "company", label: __("Company"), fieldtype: "Link", options: "Company",
+				default: this.company, change: () => {
+					const company = this.company_field.get_value();
+					if (company && company !== this.company) {
+						this.company = company;
+						this.refresh();
+					}
+				},
+			});
+			page.set_primary_action(__("Refresh"), () => this.refresh(), "refresh");
+			page.add_inner_button(__("Daily Attendance"), () => this.open_report("Daily Attendance", true));
+			page.add_inner_button(__("Consolidated Attendance"), () => this.open_report("Consolidated Attendance"));
 			this.$body = $(`<div class="rd"></div>`).appendTo(page.main);
 			this.$body.on("click", "[data-drill]", (e) => {
 				const $el = $(e.currentTarget);
@@ -66,9 +75,6 @@
 			});
 			this.$body.on("click", "[data-action]", (e) => {
 				const action = $(e.currentTarget).data("action");
-				if (action === "refresh") this.refresh();
-				if (action === "daily") this.open_report("Daily Attendance", true);
-				if (action === "consolidated") this.open_report("Consolidated Attendance");
 				if (action === "prev") this.go(-1);
 				if (action === "next") this.go(1);
 				if (action === "pick") {
@@ -81,10 +87,6 @@
 				}
 			});
 			this.$body.on("change", ".rd-date-input", (e) => e.target.value && this.set_date(e.target.value));
-			this.$body.on("change", ".rd-company", (e) => {
-				this.company = e.target.value;
-				this.refresh();
-			});
 			this.$body.on("click", ".rd-person", (e) => {
 				const d = this.data;
 				frappe.set_route("query-report", "Daily Attendance", {
@@ -127,6 +129,7 @@
 					if (!message) return;
 					this.data = message;
 					this.company = message.company;
+					if (this.company_field.get_value() !== message.company) this.company_field.set_value(message.company);
 					this.render(message);
 				},
 				error: () => this.$body.removeClass("rd-loading"),
@@ -142,19 +145,19 @@
 			const k = d.kpi;
 			const pct = (n) => (k.active ? Math.round((100 * n) / k.active) : 0);
 			this.$body.html(`
-				${this.header(d)}
 				${this.notice(d)}
 				<div class="rd-daterow">
 					<div class="rd-datenav">
-						<button class="rd-btn rd-btn-round" data-action="prev" title="${__("Previous day")}">${icon("left")}</button>
+						<button class="btn btn-default btn-sm rd-nav" data-action="prev" title="${__("Previous day")}">${icon("left")}</button>
 						<span class="rd-datewrap">
-							<button class="rd-btn rd-datepill" data-action="pick">${icon("calendar")}<span>${as_date(d.date).format("dddd, DD MMM YYYY")}</span></button>
+							<button class="btn btn-default btn-sm rd-datepill" data-action="pick">${icon("calendar", 15)}<span>${as_date(d.date).format("dddd, DD MMM YYYY")}</span></button>
 							<input type="date" class="rd-date-input" value="${d.date}" max="${frappe.datetime.get_today()}" tabindex="-1" aria-label="${__("Date")}">
 						</span>
-						<button class="rd-btn rd-btn-round" data-action="next" title="${__("Next day")}">${icon("right")}</button>
+						<button class="btn btn-default btn-sm rd-nav" data-action="next" title="${__("Next day")}">${icon("right")}</button>
 					</div>
 					<div class="rd-facts">
 						<button class="rd-fact" data-drill="day:active" data-label="${__("Active employees")}">${__("Active employees")} <b>${num(k.active)}</b></button>
+						<span class="rd-fact-sep">·</span>
 						<span class="rd-fact">${__("Punches that day")} <b>${num(d.punches.on_day)}</b></span>
 					</div>
 				</div>
@@ -181,10 +184,10 @@
 						<h3 class="rd-card-title">${__("Needs a look")}</h3>
 						<div class="rd-looks">
 							${this.look("missing_punch", "fingerprint", __("Missing punch"), k.missing_punch,
-								k.missing_punch ? `<span class="rd-pill rd-pill-solid">${__("Review")}</span>` : `<span class="rd-pill">${__("All complete")}</span>`)}
+								k.missing_punch ? `<span class="btn btn-xs btn-default">${__("Review")}</span>` : `<span class="rd-hint">${__("All complete")}</span>`)}
 							${this.look("late", "timer", __("Late arrivals"), k.late,
-								`<span class="rd-pill">${k.late ? __("View list") : __("All on time")}</span>`)}
-							${this.look("holiday_work", "star", __("Holiday work"), k.holiday_work, `<span class="rd-pill">${__("Paid as OT2")}</span>`)}
+								k.late ? `<span class="btn btn-xs btn-default">${__("View list")}</span>` : `<span class="rd-hint">${__("All on time")}</span>`)}
+							${this.look("holiday_work", "star", __("Holiday work"), k.holiday_work, `<span class="rd-hint">${__("Paid as OT2")}</span>`)}
 						</div>
 					</section>
 				</div>
@@ -218,24 +221,6 @@
 			this.charts_render(d);
 		}
 
-		header(d) {
-			const company = d.companies.length > 1
-				? `<select class="rd-eyebrow rd-company" aria-label="${__("Company")}">${d.companies.map((c) =>
-					`<option value="${esc(c)}" ${c === d.company ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>`
-				: `<span class="rd-eyebrow">${esc(d.company)}</span>`;
-			return `<header class="rd-header">
-				<div class="rd-brand">
-					<span class="rd-brand-icon">${icon("grid", 22)}</span>
-					<div>${company}<h1 class="rd-title">${__("Attendance Dashboard")}</h1></div>
-				</div>
-				<nav class="rd-actions">
-					<button class="rd-btn rd-btn-primary" data-action="daily">${__("Daily")}</button>
-					<button class="rd-btn" data-action="consolidated">${__("Consolidated")}</button>
-					<button class="rd-btn rd-btn-soft" data-action="refresh">${icon("refresh", 16)}<span>${__("Refresh")}</span></button>
-				</nav>
-			</header>`;
-		}
-
 		notice(d) {
 			const lines = [];
 			if (d.date !== d.requested_date) {
@@ -251,19 +236,19 @@
 				lines.push(__("Punches for this day stop at {0}: check-outs after that have not reached the system, so they show as missing punch.",
 					[last.format("HH:mm")]));
 			}
-			return lines.map((l) => `<div class="rd-notice"><span class="rd-notice-icon">${icon("clock")}</span><span>${l}</span></div>`).join("");
+			return lines.length ? `<div class="rd-notice">${icon("info", 16)}<div>${lines.map((l) => `<div>${l}</div>`).join("")}</div></div>` : "";
 		}
 
 		donut(k) {
 			const keys = ["present", "absent", "on_leave", "not_marked"];
 			const total = keys.reduce((s, key) => s + (k[key] || 0), 0) || 1;
 			const r = 70, c = 2 * Math.PI * r;
-			const gap = keys.filter((key) => k[key]).length > 1 ? 14 : 0;  // room for the round caps
+			const gap = keys.filter((key) => k[key]).length > 1 ? 3 : 0;
 			let offset = 0;
 			const arcs = keys.map((key) => {
 				const len = (c * (k[key] || 0)) / total;
-				const arc = len ? `<circle r="${r}" cx="90" cy="90" fill="none" stroke="${TONES[key].main}" stroke-width="20"
-					stroke-linecap="round" stroke-dasharray="${Math.max(len - gap, 0.1)} ${c}" stroke-dashoffset="${-(offset + gap / 2)}"
+				const arc = len ? `<circle r="${r}" cx="90" cy="90" fill="none" style="stroke:${TONES[key].main}" stroke-width="16"
+					stroke-dasharray="${Math.max(len - gap, 0.1)} ${c}" stroke-dashoffset="${-(offset + gap / 2)}"
 					transform="rotate(-90 90 90)" class="rd-arc" data-drill="day:${key}" data-label="${TONES[key].label}">
 					<title>${TONES[key].label}: ${num(k[key])}</title></circle>` : "";
 				offset += len;
@@ -272,7 +257,7 @@
 			const pct = k.active ? Math.round((100 * k.present) / k.active) : 0;
 			return `<div class="rd-donut">
 				<svg viewBox="0 0 180 180" role="img" aria-label="${__("{0}% came to work", [pct])}">
-					<circle r="${r}" cx="90" cy="90" fill="none" stroke="#EEEBFB" stroke-width="20"/>${arcs}
+					<circle r="${r}" cx="90" cy="90" fill="none" style="stroke:var(--gray-100, #f3f3f3)" stroke-width="16"/>${arcs}
 				</svg>
 				<div class="rd-donut-centre"><b>${pct}%</b><span>${__("came to work")}</span></div>
 			</div>`;
@@ -280,7 +265,7 @@
 
 		look(key, icon_name, label, value, pill) {
 			return `<button class="rd-look rd-l-${key}" data-drill="day:${key}" data-label="${label}">
-				<span class="rd-look-icon">${icon(icon_name, 20)}</span>
+				<span class="rd-look-icon">${icon(icon_name, 16)}</span>
 				<span class="rd-look-text"><span>${label}</span><b>${num(value)}</b></span>
 				${pill}
 			</button>`;
@@ -311,7 +296,6 @@
 				<div class="rd-stats">
 					${tiles.map(([key, icon_name, label, value, tone]) => `
 						<button class="rd-stat" data-drill="month:${key}" title="${__("Open the list")}">
-							<span class="rd-stat-icon rd-s-${tone}">${icon(icon_name, 18)}</span>
 							<span class="rd-stat-label">${label}</span>
 							<span class="rd-stat-value">${value}</span>
 						</button>`).join("")}
@@ -366,7 +350,7 @@
 		charts_render(d) {
 			this.chart("trend", {
 				type: "bar", height: 240, barOptions: { stacked: 1, spaceRatio: 0.35 },
-				colors: [TONES.present.main, TONES.absent.main, TONES.on_leave.main],
+				colors: [TONES.present.chart, TONES.absent.chart, TONES.on_leave.chart],
 				data: { labels: d.trend.labels, datasets: [
 					{ name: TONES.present.label, values: d.trend.present },
 					{ name: TONES.absent.label, values: d.trend.absent },
@@ -375,7 +359,7 @@
 			});
 			this.chart("departments", {
 				type: "bar", height: 260, barOptions: { stacked: 1, spaceRatio: 0.3 },
-				colors: [TONES.present.main, TONES.absent.main, TONES.not_marked.main],
+				colors: [TONES.present.chart, TONES.absent.chart, TONES.not_marked.chart],
 				data: { labels: d.departments.map((r) => r.name.replace(/ - [A-Z]+$/, "")), datasets: [
 					{ name: TONES.present.label, values: d.departments.map((r) => r.present) },
 					{ name: TONES.absent.label, values: d.departments.map((r) => r.absent) },
@@ -384,7 +368,7 @@
 			});
 			this.chart("ot", {
 				type: "bar", height: 260, barOptions: { spaceRatio: 0.4 },
-				colors: ["#22B07D", "#5AA9F5"],
+				colors: ["green", "blue"],
 				data: { labels: d.ot_by_month.labels, datasets: [
 					{ name: __("OT1"), values: d.ot_by_month.ot1 },
 					{ name: __("OT2"), values: d.ot_by_month.ot2 },
