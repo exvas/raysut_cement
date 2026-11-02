@@ -1,6 +1,6 @@
 {
  "app": "raysut_cement",
- "creation": "2026-11-02 10:44:34.640226",
+ "creation": "2026-11-02 11:46:17.878789",
  "docstatus": 0,
  "doctype": "Sidebar",
  "header_icon": "tablet-smartphone",
@@ -143,7 +143,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-11-02 10:44:34.640226",
+ "modified": "2026-11-02 11:46:17.878789",
  "modified_by": "Administrator",
  "module": "Raysut Cement",
  "name": "Attendance Devices",

@@ -31,7 +31,7 @@ The scheduler must be enabled (`bench --site <site> enable-scheduler`).
 
 Punches are stored in site time and are **not** marked `skip_auto_attendance`, so Shift Type auto attendance processes them. For ANVIZ devices use *Determine Check-in and Check-out = Alternating entries as IN and OUT during the same shift*.
 
-### Scheduling (workspace "Crenya Attendance")
+### Scheduling (workspace "Raysut Attendance")
 
 | HikCentral | ERPNext |
 |---|---|

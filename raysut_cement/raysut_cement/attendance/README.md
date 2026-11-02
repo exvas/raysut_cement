@@ -96,7 +96,7 @@ The Attendance shows Expected Checkout, Required Work Hours, Late (Minutes), Und
 OT1, OT2 and "Flexible Check-in Applied". It works in the hourly run and with **Mark Attendance**
 on the Shift Type; a day already marked is not marked twice. Shifts without the tick are unchanged.
 
-## Reports (Crenya Attendance → Reports)
+## Reports (Raysut Attendance → Reports)
 
 **Consolidated Attendance** — the Consolidated Monthly Attendance Report. Every day of the period
 is counted once per employee:

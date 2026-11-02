@@ -1,7 +1,7 @@
 # Copyright (c) 2026, sammish and contributors
 # For license information, please see license.txt
 
-"""Data for the Crenya Dashboard page: one day at a glance, plus the month so far."""
+"""Data for the Raysut Dashboard page: one day at a glance, plus the month so far."""
 
 from collections import Counter, defaultdict
 

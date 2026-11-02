@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\": \"hdr_short\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Crenya Attendance</b></span>\", \"col\": 12}}, {\"id\": \"rcrep0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Consolidated Attendance\", \"col\": 4}}, {\"id\": \"rcrep1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Attendance\", \"col\": 4}}, {\"id\": \"rcrep2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Under Time\", \"col\": 4}}, {\"id\": \"sc_0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule Overview\", \"col\": 3}}, {\"id\": \"sc_1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Break Timetable\", \"col\": 3}}, {\"id\": \"sc_2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Timetable\", \"col\": 3}}, {\"id\": \"sc_3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Shift\", \"col\": 3}}, {\"id\": \"sc_4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule\", \"col\": 3}}, {\"id\": \"sc_5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Checkin\", \"col\": 3}}, {\"id\": \"sc_6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"sc_7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Flexible Shift Work Hours\", \"col\": 3}}, {\"id\": \"spacer_1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_0\", \"type\": \"card\", \"data\": {\"card_name\": \"Scheduling\", \"col\": 3}}, {\"id\": \"card_1\", \"type\": \"card\", \"data\": {\"card_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"card_2\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 3}}, {\"id\": \"card_3\", \"type\": \"card\", \"data\": {\"card_name\": \"Devices\", \"col\": 3}}, {\"id\": \"rcsettingscard\", \"type\": \"card\", \"data\": {\"card_name\": \"Settings\", \"col\": 3}}]",
+ "content": "[{\"id\": \"hdr_short\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Raysut Attendance</b></span>\", \"col\": 12}}, {\"id\": \"rcrep0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Consolidated Attendance\", \"col\": 4}}, {\"id\": \"rcrep1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Daily Attendance\", \"col\": 4}}, {\"id\": \"rcrep2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Under Time\", \"col\": 4}}, {\"id\": \"sc_0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule Overview\", \"col\": 3}}, {\"id\": \"sc_1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Break Timetable\", \"col\": 3}}, {\"id\": \"sc_2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Timetable\", \"col\": 3}}, {\"id\": \"sc_3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Shift\", \"col\": 3}}, {\"id\": \"sc_4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Schedule\", \"col\": 3}}, {\"id\": \"sc_5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Employee Checkin\", \"col\": 3}}, {\"id\": \"sc_6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"sc_7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Flexible Shift Work Hours\", \"col\": 3}}, {\"id\": \"spacer_1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_0\", \"type\": \"card\", \"data\": {\"card_name\": \"Scheduling\", \"col\": 3}}, {\"id\": \"card_1\", \"type\": \"card\", \"data\": {\"card_name\": \"Attendance\", \"col\": 3}}, {\"id\": \"card_2\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 3}}, {\"id\": \"card_3\", \"type\": \"card\", \"data\": {\"card_name\": \"Devices\", \"col\": 3}}, {\"id\": \"rcsettingscard\", \"type\": \"card\", \"data\": {\"card_name\": \"Settings\", \"col\": 3}}]",
  "creation": "2026-10-27 12:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -10,7 +10,7 @@
  "icon": "calendar",
  "idx": 0,
  "is_hidden": 0,
- "label": "Crenya Attendance",
+ "label": "Raysut Attendance",
  "links": [
   {
    "hidden": 0,
@@ -213,10 +213,10 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-31 18:00:00.000000",
+ "modified": "2026-11-02 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Raysut Cement",
- "name": "Crenya Attendance",
+ "name": "Raysut Attendance",
  "number_cards": [],
  "owner": "Administrator",
  "parent_page": "",
@@ -308,6 +308,6 @@
    "report_ref_doctype": "Attendance"
   }
  ],
- "title": "Crenya Attendance",
+ "title": "Raysut Attendance",
  "type": "Workspace"
 }

@@ -1,16 +1,16 @@
 // Copyright (c) 2026, sammish and contributors
 // For license information, please see license.txt
 
-frappe.pages["crenya-dashboard"].on_page_load = function (wrapper) {
-	const page = frappe.ui.make_app_page({ parent: wrapper, title: __("Crenya Dashboard"), single_column: true });
-	wrapper.crenya_dashboard = new CrenyaDashboard(page);
+frappe.pages["raysut-dashboard"].on_page_load = function (wrapper) {
+	const page = frappe.ui.make_app_page({ parent: wrapper, title: __("Raysut Dashboard"), single_column: true });
+	wrapper.raysut_dashboard = new RaysutDashboard(page);
 };
 
-frappe.pages["crenya-dashboard"].on_page_show = function (wrapper) {
-	wrapper.crenya_dashboard && wrapper.crenya_dashboard.refresh();
+frappe.pages["raysut-dashboard"].on_page_show = function (wrapper) {
+	wrapper.raysut_dashboard && wrapper.raysut_dashboard.refresh();
 };
 
-class CrenyaDashboard {
+class RaysutDashboard {
 	constructor(page) {
 		this.page = page;
 		this.charts = {};
@@ -26,10 +26,10 @@ class CrenyaDashboard {
 		page.add_inner_button(__("Daily Attendance"), () => this.open_report("Daily Attendance"));
 		page.add_inner_button(__("Consolidated Attendance"), () => this.open_report("Consolidated Attendance"));
 
-		this.$body = $(`<div class="crenya-dashboard"></div>`).appendTo(page.main);
+		this.$body = $(`<div class="raysut-dashboard"></div>`).appendTo(page.main);
 		// keep "today" fresh while the page is open
 		this.timer = setInterval(() => {
-			if (frappe.get_route_str() === "crenya-dashboard" && this.date.get_value() === frappe.datetime.get_today()) this.refresh();
+			if (frappe.get_route_str() === "raysut-dashboard" && this.date.get_value() === frappe.datetime.get_today()) this.refresh();
 		}, 5 * 60 * 1000);
 	}
 
@@ -44,7 +44,7 @@ class CrenyaDashboard {
 
 	refresh() {
 		frappe.call({
-			method: "raysut_cement.raysut_cement.page.crenya_dashboard.crenya_dashboard.get_dashboard",
+			method: "raysut_cement.raysut_cement.page.raysut_dashboard.raysut_dashboard.get_dashboard",
 			args: { date: this.date.get_value(), company: this.company.get_value() },
 			callback: ({ message }) => {
 				if (!message) return;

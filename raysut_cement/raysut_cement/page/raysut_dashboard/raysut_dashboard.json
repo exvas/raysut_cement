@@ -5,12 +5,12 @@
  "doctype": "Page",
  "icon": "dashboard",
  "idx": 0,
- "modified": "2026-11-02 10:00:00.000000",
+ "modified": "2026-11-02 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Raysut Cement",
- "name": "crenya-dashboard",
+ "name": "raysut-dashboard",
  "owner": "Administrator",
- "page_name": "crenya-dashboard",
+ "page_name": "raysut-dashboard",
  "roles": [
   {
    "role": "System Manager"
@@ -26,5 +26,5 @@
  "standard": "Yes",
  "style": null,
  "system_page": 0,
- "title": "Crenya Dashboard"
+ "title": "Raysut Dashboard"
 }

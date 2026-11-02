@@ -17,7 +17,7 @@ add_to_apps_screen = [
 		"name": "raysut_cement",
 		"logo": "/assets/raysut_cement/images/raysut-cement-logo.svg",
 		"title": "Raysut Cement",
-		"route": "/desk/crenya-dashboard",
+		"route": "/desk/raysut-dashboard",
 		"has_permission": "raysut_cement.raysut_cement.settings.has_app_permission",
 	}
 ]
