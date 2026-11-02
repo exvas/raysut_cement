@@ -3,6 +3,7 @@
 	--rd-present: var(--green-500); --rd-present-bg: var(--bg-green); --rd-present-ink: var(--text-on-green);
 	--rd-absent: var(--red-500); --rd-absent-bg: var(--bg-red); --rd-absent-ink: var(--text-on-red);
 	--rd-leave: var(--blue-500); --rd-leave-bg: var(--bg-blue); --rd-leave-ink: var(--text-on-blue);
+	--rd-missing: var(--purple-500); --rd-missing-bg: var(--bg-purple); --rd-missing-ink: var(--text-on-purple);
 	--rd-unmarked: var(--yellow-500); --rd-unmarked-bg: var(--bg-yellow); --rd-unmarked-ink: var(--text-on-yellow);
 	--rd-radius: var(--border-radius-lg, 12px);
 }
@@ -57,6 +58,8 @@ button.rd-fact:hover b { text-decoration: underline; }
 .rd-tile-value { font-size: 24px; font-weight: 700; line-height: 1.25; color: var(--heading-color, var(--text-color)); font-variant-numeric: tabular-nums; }
 .rd-tile-sub { font-size: var(--text-xs, 11px); color: var(--text-muted); }
 .rd-t-present .rd-dot { background: var(--rd-present); }
+.rd-t-missing_punch .rd-dot { background: var(--rd-missing); }
+.rd-tiles > .rd-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
 .rd-t-absent .rd-dot { background: var(--rd-absent); }
 .rd-t-on_leave .rd-dot { background: var(--rd-leave); }
 .rd-t-not_marked .rd-dot { background: var(--rd-unmarked); }
@@ -101,10 +104,11 @@ button.rd-fact:hover b { text-decoration: underline; }
 .rd-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
 .rd-table tbody tr:last-child td { border-bottom: 0; }
 .rd-table .rd-num { text-align: right; }
-.rd-loc-table { min-width: 640px; }
+.rd-loc-table { min-width: 720px; }
 .rd-loc { font-weight: 600; }
 .rd-count { min-width: 36px; padding: 1px 10px !important; border-radius: 999px; font-weight: 600; text-align: center !important; }
 .rd-c-present { background: var(--rd-present-bg) !important; color: var(--rd-present-ink) !important; }
+.rd-c-missing_punch { background: var(--rd-missing-bg) !important; color: var(--rd-missing-ink) !important; }
 .rd-c-absent { background: var(--rd-absent-bg) !important; color: var(--rd-absent-ink) !important; }
 .rd-c-on_leave { background: var(--rd-leave-bg) !important; color: var(--rd-leave-ink) !important; }
 .rd-c-not_marked { background: var(--rd-unmarked-bg) !important; color: var(--rd-unmarked-ink) !important; }

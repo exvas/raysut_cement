@@ -18,10 +18,14 @@
 	// status colours, the same on the donut, tiles, table and bars
 	const TONES = {
 		present: { main: "var(--green-500)", chart: "green", label: __("Present") },
+		missing_punch: { main: "var(--purple-500)", chart: "#9c45e3", label: __("Missing punch") },
 		absent: { main: "var(--red-500)", chart: "red", label: __("Absent") },
 		on_leave: { main: "var(--blue-500)", chart: "blue", label: __("On leave") },
 		not_marked: { main: "var(--yellow-500)", chart: "yellow", label: __("Not marked") },
 	};
+
+	// a day's statuses, in the order of the tiles and the donut
+	const DAY_KEYS = ["present", "missing_punch", "absent", "on_leave", "not_marked"];
 
 	// line icons (Lucide style, 24px grid)
 	const ICON_PATHS = {
@@ -169,11 +173,11 @@
 							<div class="rd-who-tiles">
 								<h3 class="rd-card-title">${__("Who was where")}</h3>
 								<div class="rd-tiles">
-									${["present", "absent", "on_leave", "not_marked"].map((key) => `
+									${DAY_KEYS.map((key) => `
 										<button class="rd-tile rd-t-${key}" data-drill="day:${key}" data-label="${TONES[key].label}">
 											<span class="rd-tile-label"><i class="rd-dot"></i>${TONES[key].label}</span>
 											<span class="rd-tile-value">${num(k[key])}</span>
-											<span class="rd-tile-sub">${key === "not_marked" ? __("no attendance yet") : __("{0}% of staff", [pct(k[key])])}</span>
+											<span class="rd-tile-sub">${{ not_marked: __("no attendance yet"), missing_punch: __("one punch only") }[key] || __("{0}% of staff", [pct(k[key])])}</span>
 										</button>`).join("")}
 								</div>
 							</div>
@@ -240,7 +244,7 @@
 		}
 
 		donut(k) {
-			const keys = ["present", "absent", "on_leave", "not_marked"];
+			const keys = DAY_KEYS;
 			const total = keys.reduce((s, key) => s + (k[key] || 0), 0) || 1;
 			const r = 70, c = 2 * Math.PI * r;
 			const gap = keys.filter((key) => k[key]).length > 1 ? 3 : 0;
@@ -256,10 +260,10 @@
 			}).join("");
 			const pct = k.active ? Math.round((100 * k.present) / k.active) : 0;
 			return `<div class="rd-donut">
-				<svg viewBox="0 0 180 180" role="img" aria-label="${__("{0}% came to work", [pct])}">
+				<svg viewBox="0 0 180 180" role="img" aria-label="${__("{0}% present", [pct])}">
 					<circle r="${r}" cx="90" cy="90" fill="none" style="stroke:var(--gray-100, #f3f3f3)" stroke-width="16"/>${arcs}
 				</svg>
-				<div class="rd-donut-centre"><b>${pct}%</b><span>${__("came to work")}</span></div>
+				<div class="rd-donut-centre"><b>${pct}%</b><span>${__("present")}</span></div>
 			</div>`;
 		}
 
@@ -315,12 +319,13 @@
 			const cell = (r, key, label, value) => `<td><button class="rd-count rd-c-${key}" data-drill="day:${key}" data-location="${esc(r.name)}"
 				data-label="${esc(`${label} · ${place(r)}`)}">${num(value)}</button></td>`;
 			const body = rows.map((r) => {
-				const split = ["present", "absent", "on_leave", "not_marked"].map((key) => r[key]
+				const split = DAY_KEYS.map((key) => r[key]
 					? `<span style="width:${(100 * r[key]) / r.headcount}%;background:${TONES[key].main}"></span>` : "").join("");
 				return `<tr>
 					<td class="rd-loc">${esc(place(r))}</td>
 					${cell(r, "active", __("Staff"), r.headcount)}
-					${cell(r, "present", __("Present"), r.present)}${cell(r, "absent", __("Absent"), r.absent)}
+					${cell(r, "present", __("Present"), r.present)}${cell(r, "missing_punch", __("Missing punch"), r.missing_punch)}
+					${cell(r, "absent", __("Absent"), r.absent)}
 					${cell(r, "on_leave", __("On leave"), r.on_leave)}${cell(r, "not_marked", __("Not marked"), r.not_marked)}
 					<td><div class="rd-split"><div class="rd-stack">${split}</div><b>${r.present_pct}%</b></div></td>
 				</tr>`;
@@ -328,8 +333,8 @@
 			return `<section class="rd-card">
 				<h3 class="rd-card-title">${__("By location")}</h3>
 				${rows.length ? `<div class="rd-table-wrap"><table class="rd-table rd-loc-table">
-					<thead><tr><th>${__("Location")}</th><th>${__("Staff")}</th><th>${__("Present")}</th><th>${__("Absent")}</th>
-						<th>${__("Leave")}</th><th>${__("Not marked")}</th><th>${__("Split")}</th></tr></thead>
+					<thead><tr><th>${__("Location")}</th><th>${__("Staff")}</th><th>${__("Present")}</th><th>${__("Missing punch")}</th>
+						<th>${__("Absent")}</th><th>${__("Leave")}</th><th>${__("Not marked")}</th><th>${__("Split")}</th></tr></thead>
 					<tbody>${body}</tbody></table></div>` : `<div class="rd-empty">${__("No employees")}</div>`}
 				${rows.some((r) => r.name === not_set) ? `<div class="rd-tip">${icon("info", 16)}
 					<span>${__("Tip: set a Branch on each employee to split staff by site — e.g. Raysut Plant, Duqm, Muscat.")}</span></div>` : ""}
@@ -350,9 +355,10 @@
 		charts_render(d) {
 			this.chart("trend", {
 				type: "bar", height: 240, barOptions: { stacked: 1, spaceRatio: 0.35 },
-				colors: [TONES.present.chart, TONES.absent.chart, TONES.on_leave.chart],
+				colors: [TONES.present.chart, TONES.missing_punch.chart, TONES.absent.chart, TONES.on_leave.chart],
 				data: { labels: d.trend.labels, datasets: [
 					{ name: TONES.present.label, values: d.trend.present },
+					{ name: TONES.missing_punch.label, values: d.trend.missing_punch },
 					{ name: TONES.absent.label, values: d.trend.absent },
 					{ name: TONES.on_leave.label, values: d.trend.on_leave },
 				] },
@@ -407,7 +413,7 @@
 					const time = (v) => (v ? moment(v).format("HH:mm") : "");
 					const $list = dialog.fields_dict.list.$wrapper;
 					const badge = (r) => {
-						const tone = { Present: "green", "Work From Home": "green", Absent: "red", "On Leave": "blue", "Half Day": "orange" }[r.status] || "yellow";
+						const tone = { "Missing Punch": "purple", Present: "green", "Work From Home": "green", Absent: "red", "On Leave": "blue", "Half Day": "orange" }[r.status] || "yellow";
 						return `<span class="rd-badge rd-badge-${tone}">${esc(r.leave_type || r.status)}</span>`;
 					};
 					$list.html(rows.length ? `<div class="rd-dialog-list rd-table-wrap"><table class="rd-table rd-people-table">
@@ -421,7 +427,7 @@
 							<td><div class="rd-name">${esc(r.employee_name)}</div>
 								<div class="rd-dept">${esc(r.employee)}${r.department ? ` · ${esc(r.department.replace(/ - [A-Z]+$/, ""))}` : ""}</div></td>
 							<td class="rd-desig">${esc(r.designation || "")}</td>
-							<td><div class="rd-badges">${badge(r)}${r.missing_punch ? `<span class="rd-badge rd-badge-purple">${__("Missing punch")}</span>` : ""}
+							<td><div class="rd-badges">${badge(r)}${r.missing_punch && r.status !== "Missing Punch" ? `<span class="rd-badge rd-badge-purple">${__("Missing punch")}</span>` : ""}
 								${r.late_minutes ? `<span class="rd-badge rd-badge-orange">${__("Late {0} min", [r.late_minutes])}</span>` : ""}</div></td>
 							<td class="rd-num rd-time">${time(r.in_time) || "—"}</td>
 							<td class="rd-num rd-time">${time(r.out_time) || "—"}</td>

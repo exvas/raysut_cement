@@ -45,7 +45,9 @@ def execute(filters=None):
 				"employee_name": e.employee_name,
 				"department": e.department or _("Not Set"),
 				"shift": a.shift,
-				"status": a.status if not a.leave_type else f"{a.status} ({a.leave_type})",
+				# a worked day with one punch is not complete: show it as a missing punch, not present
+				"status": _("Missing Punch") if cint(a.custom_missing_punch) and a.status in ("Present", "Work From Home", "Half Day")
+				else a.status if not a.leave_type else f"{a.status} ({a.leave_type})",
 				"check_in": a.in_time,
 				"check_out": a.out_time,
 				"expected_checkout": a.expected_checkout_time,

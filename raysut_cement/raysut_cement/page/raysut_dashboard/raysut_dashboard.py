@@ -62,15 +62,24 @@ def get_dashboard(date=None, company=None):
 	}
 
 
+def day_status(r):
+	"""How the dashboard counts a day: a worked day with one punch is a missing punch, not present, until it is fixed."""
+	if not r:
+		return "not_marked"
+	if r.custom_missing_punch and r.status in (*PRESENT, "Half Day"):
+		return "missing_punch"
+	return {"Absent": "absent", "On Leave": "on_leave", "Half Day": "half_day"}.get(r.status, "present" if r.status in PRESENT else None)
+
+
 DRILL_DOWN = {
 	"active": lambda r: True,
-	"present": lambda r: r and r.status in PRESENT,
-	"absent": lambda r: r and r.status == "Absent",
-	"on_leave": lambda r: r and r.status == "On Leave",
-	"half_day": lambda r: r and r.status == "Half Day",
+	"present": lambda r: day_status(r) == "present",
+	"absent": lambda r: day_status(r) == "absent",
+	"on_leave": lambda r: day_status(r) == "on_leave",
+	"half_day": lambda r: day_status(r) == "half_day",
 	"not_marked": lambda r: not r,
 	"late": lambda r: r and r.late_entry,
-	"missing_punch": lambda r: r and r.custom_missing_punch,
+	"missing_punch": lambda r: day_status(r) == "missing_punch",
 	"holiday_work": lambda r: r and r.custom_is_holiday_work,
 }
 
@@ -92,7 +101,8 @@ def get_kpi_employees(date, company, kpi, location=None):
 			continue
 		out.append(
 			{"employee": name, "employee_name": e.employee_name, "department": e.department, "designation": e.designation,
-			 "attendance": r.name if r else None, "status": r.status if r else _("Not Marked"),
+			 "attendance": r.name if r else None,
+			 "status": (_("Missing Punch") if day_status(r) == "missing_punch" else r.status) if r else _("Not Marked"),
 			 "leave_type": r.leave_type if r else None, "in_time": r.in_time if r else None,
 			 "out_time": r.out_time if r else None, "working_hours": flt(r.working_hours, 2) if r else 0,
 			 "late_minutes": cint(r.late_minutes) if r else 0, "missing_punch": cint(r.custom_missing_punch) if r else 0}
@@ -127,17 +137,17 @@ def is_company_holiday(company, day):
 
 
 def day_kpis(employees, rows):
-	status = Counter(r.status for r in rows)
+	status = Counter(day_status(r) for r in rows)
 	marked = {r.employee for r in rows}
 	return {
 		"active": len(employees),
-		"present": sum(status[s] for s in PRESENT),
-		"half_day": status["Half Day"],
-		"absent": status["Absent"],
-		"on_leave": status["On Leave"],
+		"present": status["present"],
+		"missing_punch": status["missing_punch"],
+		"half_day": status["half_day"],
+		"absent": status["absent"],
+		"on_leave": status["on_leave"],
 		"not_marked": len(set(employees) - marked),
 		"late": sum(1 for r in rows if r.late_entry),
-		"missing_punch": sum(1 for r in rows if r.custom_missing_punch),
 		"holiday_work": sum(1 for r in rows if r.custom_is_holiday_work),
 	}
 
@@ -158,22 +168,15 @@ def month_kpis(rows):
 
 def breakdown(employees, rows, field):
 	"""Headcount and the day's statuses per branch (location) or department."""
-	by_employee = {r.employee: r.status for r in rows}
+	by_employee = {r.employee: r for r in rows}
 	groups = defaultdict(Counter)
 	for name, e in employees.items():
 		group = groups[e.get(field) or _("Not Set")]
 		group["headcount"] += 1
-		status = by_employee.get(name)
-		group[
-			"present" if status in PRESENT else
-			"absent" if status == "Absent" else
-			"on_leave" if status == "On Leave" else
-			"half_day" if status == "Half Day" else
-			"not_marked"
-		] += 1
+		group[day_status(by_employee.get(name)) or "not_marked"] += 1
 	out = []
 	for name, c in groups.items():
-		row = {"name": name, **{k: c[k] for k in ("headcount", "present", "absent", "on_leave", "half_day", "not_marked")}}
+		row = {"name": name, **{k: c[k] for k in ("headcount", "present", "missing_punch", "absent", "on_leave", "half_day", "not_marked")}}
 		row["present_pct"] = round(100 * (c["present"] + 0.5 * c["half_day"]) / c["headcount"]) if c["headcount"] else 0
 		out.append(row)
 	return sorted(out, key=lambda r: -r["headcount"])
@@ -185,15 +188,16 @@ def trend(names, day):
 	for r in frappe.get_all(
 		"Attendance",
 		filters={"docstatus": 1, "employee": ("in", names), "attendance_date": ("between", [start, day])},
-		fields=["attendance_date", "status"],
+		fields=["attendance_date", "status", "custom_missing_punch"],
 	):
-		counts[r.attendance_date][r.status] += 1
+		counts[r.attendance_date][day_status(r)] += 1
 	dates = [getdate(add_days(start, i)) for i in range(TREND_DAYS)]
 	return {
 		"labels": [d.strftime("%d %b") for d in dates],
-		"present": [sum(counts[d][s] for s in PRESENT) for d in dates],
-		"absent": [counts[d]["Absent"] for d in dates],
-		"on_leave": [counts[d]["On Leave"] for d in dates],
+		"present": [counts[d]["present"] for d in dates],
+		"missing_punch": [counts[d]["missing_punch"] for d in dates],
+		"absent": [counts[d]["absent"] for d in dates],
+		"on_leave": [counts[d]["on_leave"] for d in dates],
 	}
 
 
