@@ -46,6 +46,7 @@ def get_dashboard(date=None, company=None):
 
 	return {
 		"company": company,
+		"companies": frappe.get_list("Company", pluck="name", order_by="name"),
 		"requested_date": requested,
 		"date": day,
 		"is_holiday": is_company_holiday(company, day),
@@ -57,10 +58,7 @@ def get_dashboard(date=None, company=None):
 		"ot_by_month": ot_by_month(names, day),
 		"top_overtime": top_overtime(employees, month),
 		"exceptions": exceptions(employees, today),
-		"punches": {
-			"on_day": frappe.db.count("Employee Checkin", {"time": ("between", [day, f"{day} 23:59:59"])}),
-			"last_sync": last_device_sync(),
-		},
+		"punches": punches_on(day, names),
 	}
 
 
@@ -100,6 +98,13 @@ def get_kpi_employees(date, company, kpi, location=None):
 			 "late_minutes": cint(r.late_minutes) if r else 0, "missing_punch": cint(r.custom_missing_punch) if r else 0}
 		)
 	return sorted(out, key=lambda x: ((x["department"] or "~"), x["employee_name"] or ""))
+
+
+def punches_on(day, names):
+	"""The day's punches of the employees shown; the last one tells whether the day's data is complete."""
+	filters = {"time": ("between", [day, f"{day} 23:59:59"]), "employee": ("in", names)}
+	last = frappe.get_all("Employee Checkin", filters=filters, pluck="time", order_by="time desc", limit=1)
+	return {"on_day": frappe.db.count("Employee Checkin", filters), "last": last[0] if last else None, "last_sync": last_device_sync()}
 
 
 def last_device_sync():
