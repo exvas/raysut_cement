@@ -64,6 +64,44 @@ def get_dashboard(date=None, company=None):
 	}
 
 
+DRILL_DOWN = {
+	"active": lambda r: True,
+	"present": lambda r: r and r.status in PRESENT,
+	"absent": lambda r: r and r.status == "Absent",
+	"on_leave": lambda r: r and r.status == "On Leave",
+	"half_day": lambda r: r and r.status == "Half Day",
+	"not_marked": lambda r: not r,
+	"late": lambda r: r and r.late_entry,
+	"missing_punch": lambda r: r and r.custom_missing_punch,
+	"holiday_work": lambda r: r and r.custom_is_holiday_work,
+}
+
+
+@frappe.whitelist()
+def get_kpi_employees(date, company, kpi, location=None):
+	"""The employees behind one of the day's figures (a KPI card or a location cell), same counting as the cards."""
+	if kpi not in DRILL_DOWN:
+		frappe.throw(_("Unknown figure {0}").format(kpi))
+	employees = {e.name: e for e in get_employees(frappe._dict(company=company, status="Active"))}
+	if location:
+		employees = {n: e for n, e in employees.items() if (e.branch or _("Not Set")) == location}
+	day = getdate(date)
+	by_employee = {r.employee: r for r in attendance_on(day, list(employees) or [""])}
+	out = []
+	for name, e in employees.items():
+		r = by_employee.get(name)
+		if not DRILL_DOWN[kpi](r):
+			continue
+		out.append(
+			{"employee": name, "employee_name": e.employee_name, "department": e.department, "designation": e.designation,
+			 "attendance": r.name if r else None, "status": r.status if r else _("Not Marked"),
+			 "leave_type": r.leave_type if r else None, "in_time": r.in_time if r else None,
+			 "out_time": r.out_time if r else None, "working_hours": flt(r.working_hours, 2) if r else 0,
+			 "late_minutes": cint(r.late_minutes) if r else 0, "missing_punch": cint(r.custom_missing_punch) if r else 0}
+		)
+	return sorted(out, key=lambda x: ((x["department"] or "~"), x["employee_name"] or ""))
+
+
 def last_device_sync():
 	value = frappe.db.get_single_value("Crosschex Settings", "last_sync_time")
 	return value if value and getdate(value).year > 2000 else None  # never synced reads back as 0001-01-01
@@ -73,8 +111,8 @@ def attendance_on(day, names):
 	return frappe.get_all(
 		"Attendance",
 		filters={"docstatus": 1, "attendance_date": day, "employee": ("in", names)},
-		fields=["employee", "status", "leave_type", "late_entry", "late_minutes", "custom_missing_punch",
-				"custom_is_holiday_work", "in_time", "working_hours", "shift"],
+		fields=["name", "employee", "status", "leave_type", "late_entry", "late_minutes", "custom_missing_punch",
+				"custom_is_holiday_work", "in_time", "out_time", "working_hours", "shift"],
 	)
 
 

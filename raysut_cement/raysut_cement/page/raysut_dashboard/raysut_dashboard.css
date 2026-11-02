@@ -43,3 +43,10 @@
 .raysut-dashboard .cd-dept { font-size: 11px; color: var(--text-muted); }
 .raysut-dashboard .cd-chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--bg-blue, #e8f1fb); color: var(--text-on-blue, #2f6db0); }
 .raysut-dashboard .cd-chip-warn { background: var(--bg-orange, #fdf0dc); color: var(--text-on-orange, #a3610a); }
+.raysut-dashboard .cd-click { cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.raysut-dashboard .cd-click:hover { box-shadow: 0 4px 14px rgba(0, 0, 0, .08); transform: translateY(-1px); }
+.raysut-dashboard .cd-cell { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.raysut-dashboard .cd-cell:hover { background: var(--control-bg); }
+.raysut-dashboard .cd-dialog-list { max-height: 60vh; overflow-y: auto; }
+.raysut-dashboard .cd-dialog-list thead th { position: sticky; top: 0; background: var(--modal-bg, var(--card-bg)); }
+.raysut-dashboard .cd-row { cursor: pointer; }
