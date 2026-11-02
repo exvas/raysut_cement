@@ -406,22 +406,34 @@
 					const marked = rows.some((r) => r.attendance);
 					const time = (v) => (v ? moment(v).format("HH:mm") : "");
 					const $list = dialog.fields_dict.list.$wrapper;
-					$list.html(rows.length ? `<div class="rd-dialog-list rd-table-wrap"><table class="rd-table">
-						<thead><tr><th>#</th><th>${__("Employee")}</th><th>${__("Designation")}</th><th>${__("Status")}</th>
+					const badge = (r) => {
+						const tone = { Present: "green", "Work From Home": "green", Absent: "red", "On Leave": "blue", "Half Day": "orange" }[r.status] || "yellow";
+						return `<span class="rd-badge rd-badge-${tone}">${esc(r.leave_type || r.status)}</span>`;
+					};
+					$list.html(rows.length ? `<div class="rd-dialog-list rd-table-wrap"><table class="rd-table rd-people-table">
+						<colgroup><col style="width:48px"><col><col style="width:22%"><col style="width:200px">
+							<col style="width:72px"><col style="width:72px"><col style="width:72px"></colgroup>
+						<thead><tr><th class="rd-num">#</th><th>${__("Employee")}</th><th>${__("Designation")}</th><th>${__("Status")}</th>
 							<th class="rd-num">${__("In")}</th><th class="rd-num">${__("Out")}</th><th class="rd-num">${__("Hours")}</th></tr></thead>
-						<tbody>${rows.map((r, i) => `<tr class="rd-row" data-attendance="${esc(r.attendance || "")}" data-employee="${esc(r.employee)}"
+						<tbody>${rows.map((r, i) => `<tr class="rd-item" data-attendance="${esc(r.attendance || "")}" data-employee="${esc(r.employee)}"
 							data-search="${esc(`${r.employee} ${r.employee_name} ${r.department || ""} ${r.designation || ""}`.toLowerCase())}">
-							<td class="rd-muted">${i + 1}</td>
-							<td><div class="rd-name">${esc(r.employee_name)} <span class="rd-muted">${esc(r.employee)}</span></div>
-								<div class="rd-dept">${esc((r.department || "").replace(/ - [A-Z]+$/, ""))}</div></td>
-							<td>${esc(r.designation || "")}</td>
-							<td>${esc(r.leave_type || r.status)}${r.missing_punch ? ` <span class="rd-pill rd-pill-missing">${__("Missing punch")}</span>` : ""}
-								${r.late_minutes ? ` <span class="rd-pill rd-pill-late">${__("Late {0} min", [r.late_minutes])}</span>` : ""}</td>
-							<td class="rd-num">${time(r.in_time)}</td><td class="rd-num">${time(r.out_time)}</td>
-							<td class="rd-num">${r.working_hours ? num(r.working_hours, 2) : ""}</td>
-						</tr>`).join("")}</tbody></table></div>`
+							<td class="rd-num rd-muted">${i + 1}</td>
+							<td><div class="rd-name">${esc(r.employee_name)}</div>
+								<div class="rd-dept">${esc(r.employee)}${r.department ? ` · ${esc(r.department.replace(/ - [A-Z]+$/, ""))}` : ""}</div></td>
+							<td class="rd-desig">${esc(r.designation || "")}</td>
+							<td><div class="rd-badges">${badge(r)}${r.missing_punch ? `<span class="rd-badge rd-badge-purple">${__("Missing punch")}</span>` : ""}
+								${r.late_minutes ? `<span class="rd-badge rd-badge-orange">${__("Late {0} min", [r.late_minutes])}</span>` : ""}</div></td>
+							<td class="rd-num rd-time">${time(r.in_time) || "—"}</td>
+							<td class="rd-num rd-time">${time(r.out_time) || "—"}</td>
+							<td class="rd-num rd-time">${r.working_hours ? num(r.working_hours, 2) : "—"}</td>
+						</tr>`).join("")}</tbody></table></div>
+						<div class="rd-dialog-foot rd-muted"></div>`
 						: `<div class="rd-empty">${__("Nobody")}</div>`);
-					$list.find(".rd-row").on("click", (e) => {
+					const count = () => {
+						const shown = $list.find(".rd-item").filter((_, tr) => tr.style.display !== "none").length;
+						$list.find(".rd-dialog-foot").text(__("Showing {0} of {1}", [shown, rows.length]));
+					};
+					$list.find(".rd-item").on("click", (e) => {
 						const $row = $(e.currentTarget);
 						dialog.hide();
 						$row.data("attendance") ? frappe.set_route("Form", "Attendance", $row.data("attendance"))
@@ -429,7 +441,8 @@
 					});
 					dialog.fields_dict.search.$input.on("input", (e) => {
 						const q = e.target.value.toLowerCase();
-						$list.find(".rd-row").each((_, tr) => $(tr).toggle(tr.dataset.search.includes(q)));
+						$list.find(".rd-item").each((_, tr) => $(tr).toggle(tr.dataset.search.includes(q)));
+						count();
 					});
 					if (rows.length) {
 						dialog.set_primary_action(marked ? __("Open in Attendance List") : __("Open in Employee List"), () => {
@@ -441,6 +454,7 @@
 						dialog.set_secondary_action(() => { dialog.hide(); this.open_report("Daily Attendance", true); });
 					}
 					dialog.show();
+					count();
 				},
 			});
 		}
