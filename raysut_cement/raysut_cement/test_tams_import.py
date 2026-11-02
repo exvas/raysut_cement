@@ -6,7 +6,7 @@ from unittest.mock import patch
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from raysut_cement.raysut_cement.tams_import import import_checkins, import_employees, import_timesheet
+from raysut_cement.raysut_cement.tams_import import import_checkins, import_employees, import_timesheet, rebuild_imported_hours
 
 
 class TestTamsImport(FrappeTestCase):
@@ -49,8 +49,8 @@ class TestTamsImport(FrappeTestCase):
 
 	def test_timesheet_days_become_attendance(self):
 		rows = [
-			[self.code, "2026-03-01", "PR", "2026-03-01 07:01:00", "", "5.5", "0"],
-			[self.code, "2026-03-01", "AB", "", "2026-03-01 19:03:00", "6.5", "0"],
+			[self.code, "2026-03-01", "PR", "2026-03-01 07:01:00", "", "5.30", "0"],
+			[self.code, "2026-03-01", "AB", "", "2026-03-01 19:03:00", "6.30", "0"],
 			[self.code, "2026-03-02", "AL", "", "", "0", "0"],
 			[self.code, "2026-03-03", "OF", "", "", "0", "0"],
 			[self.code, "2026-03-04", "AB", "", "", "0", "0"],
@@ -68,3 +68,34 @@ class TestTamsImport(FrappeTestCase):
 		self.assertEqual((leave.status, leave.leave_type), ("On Leave", "Annual Leave"))
 		self.assertEqual((str(absent.attendance_date), absent.status), ("2026-03-04", "Absent"))
 		self.assertEqual(import_timesheet(rows, self.company)["created"], 0)
+
+	def test_hours_are_tams_h_mm_and_nights_pair_with_next_morning(self):
+		rows = [
+			[self.code, "2026-03-01", "PR", "2026-03-01 07:08:00", "2026-03-01 15:03:00", "7.55", "0"],  # 7 h 55 min
+			# TAMS night: each date holds the evening IN and the previous night's morning OUT
+			[self.code, "2026-03-02", "PR", "", "2026-03-02 06:57:00", "0", "0"],
+			[self.code, "2026-03-02", "PR", "2026-03-02 18:56:00", "", "0", "0"],
+			[self.code, "2026-03-03", "PR", "", "2026-03-03 06:59:00", "0", "0"],
+			[self.code, "2026-03-03", "PR", "2026-03-03 18:55:00", "", "0", "0"],
+			[self.code, "2026-03-05", "PR", "2026-03-05 08:00:00", "", "0", "0"],  # forgot to punch out...
+			[self.code, "2026-03-06", "PR", "2026-03-06 07:00:00", "2026-03-06 15:00:00", "8.00", "0"],  # ...not this day's OUT
+			[self.code, "2026-03-08", "PR", "2026-03-08 18:57:00", "", "0", "0"],  # night with only the IN on its date
+			[self.code, "2026-03-09", "PR", "2026-03-09 18:56:00", "2026-03-09 06:57:00", "0", "0"],
+		]
+		import_timesheet(rows, self.company)
+		self.assertEqual(frappe.db.get_value("Attendance", {"employee": self.employee, "attendance_date": "2026-03-01"}, "working_hours"), 7.92)
+
+		self.assertEqual(rebuild_imported_hours("2026-03-01", "2026-03-09", self.employee), 5)  # 1 and 6 March were already right
+		days = {
+			str(a.attendance_date): (a.working_hours, a.out_time and str(a.out_time), a.custom_missing_punch)
+			for a in frappe.get_all(
+				"Attendance", {"employee": self.employee}, ["attendance_date", "working_hours", "out_time", "custom_missing_punch"]
+			)
+		}
+		self.assertEqual(days["2026-03-01"], (7.92, "2026-03-01 15:03:00", 0))
+		self.assertEqual(days["2026-03-02"], (12.05, "2026-03-03 06:59:00", 0))  # 18:56 to next morning 06:59
+		self.assertEqual(days["2026-03-03"], (0, None, 1))  # the next morning is not in TAMS
+		self.assertEqual(days["2026-03-05"], (0, None, 1))
+		self.assertEqual(days["2026-03-06"], (8, "2026-03-06 15:00:00", 0))
+		self.assertEqual(days["2026-03-08"], (12.0, "2026-03-09 06:57:00", 0))
+		self.assertEqual(rebuild_imported_hours("2026-03-01", "2026-03-09", self.employee), 0)

@@ -322,8 +322,9 @@ class TestShiftPatterns(SchedulingTestCase):
 
 		employee = self.employee()
 		start = next_weekday(add_days(today(), 1), 6)
-		spa = self.schedule(pattern.name, start, horizon=28, assign_to="Employee", employee=employee)
-		weekdays = {(sa.start_date - start).days for sa in self.generated(employee, spa.name)}
+		# the horizon counts from today and the start can be up to a week away, so 35 days covers 4 weeks
+		spa = self.schedule(pattern.name, start, horizon=35, assign_to="Employee", employee=employee)
+		weekdays = {(sa.start_date - start).days for sa in self.generated(employee, spa.name) if (sa.start_date - start).days < 28}
 		self.assertEqual(weekdays, {1, 9, 15, 23})  # Mon wk1, Tue wk2, Mon wk3, Tue wk4
 
 	def test_09_day_cycle_across_month_boundary(self):

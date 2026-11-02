@@ -1,0 +1,45 @@
+.crenya-dashboard { padding: 4px 0 32px; display: grid; gap: 16px; }
+.crenya-dashboard .cd-notice { background: var(--yellow-highlight-color, var(--bg-yellow)); color: var(--text-color); border-radius: 8px; padding: 10px 14px; font-size: var(--text-sm); }
+.crenya-dashboard .cd-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.crenya-dashboard .cd-eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.crenya-dashboard .cd-title { margin: 2px 0 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.crenya-dashboard .cd-sync { color: var(--text-muted); font-size: var(--text-sm); }
+.crenya-dashboard .cd-section { margin: 4px 0 -4px; font-size: 14px; font-weight: 600; color: var(--text-muted); }
+
+.crenya-dashboard .cd-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.crenya-dashboard .cd-kpi { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px; border-top: 3px solid var(--cd-tone); }
+.crenya-dashboard .cd-kpi-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+.crenya-dashboard .cd-kpi-value { font-size: 28px; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--heading-color, var(--text-color)); }
+.crenya-dashboard .cd-kpis-small .cd-kpi-value { font-size: 22px; }
+.crenya-dashboard .cd-kpi-sub { font-size: 11px; color: var(--text-muted); }
+.crenya-dashboard .cd-neutral { --cd-tone: #7c8a96; }
+.crenya-dashboard .cd-good { --cd-tone: #2e9e5b; }
+.crenya-dashboard .cd-bad { --cd-tone: #e05252; }
+.crenya-dashboard .cd-warn { --cd-tone: #e0a030; }
+.crenya-dashboard .cd-info { --cd-tone: #4a90d9; }
+
+.crenya-dashboard .cd-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.crenya-dashboard .cd-wide { grid-column: 1 / -1; }
+@media (max-width: 900px) { .crenya-dashboard .cd-grid { grid-template-columns: minmax(0, 1fr); } }
+.crenya-dashboard .cd-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.crenya-dashboard .cd-card-title { font-weight: 600; margin-bottom: 8px; }
+.crenya-dashboard .cd-chart { min-height: 200px; }
+.crenya-dashboard .cd-empty { padding: 24px 0; text-align: center; }
+
+.crenya-dashboard .cd-table-wrap { overflow-x: auto; }
+.crenya-dashboard .cd-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.crenya-dashboard .cd-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); font-weight: 600; text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+.crenya-dashboard .cd-table td { padding: 7px 8px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+.crenya-dashboard .cd-num { text-align: right; }
+.crenya-dashboard .cd-good-text { color: #2e9e5b; font-weight: 600; }
+.crenya-dashboard .cd-bad-text { color: #e05252; font-weight: 600; }
+.crenya-dashboard .cd-bar { display: inline-block; width: 120px; height: 8px; background: var(--border-color); border-radius: 999px; overflow: hidden; vertical-align: middle; }
+.crenya-dashboard .cd-bar span { display: block; height: 100%; background: #2e9e5b; }
+.crenya-dashboard .cd-pct { margin-left: 8px; font-weight: 600; }
+.crenya-dashboard .cd-hint { margin-top: 8px; font-size: 12px; color: var(--text-muted); }
+.crenya-dashboard .cd-people tbody tr { cursor: pointer; }
+.crenya-dashboard .cd-people tbody tr:hover { background: var(--control-bg); }
+.crenya-dashboard .cd-name { font-weight: 500; }
+.crenya-dashboard .cd-dept { font-size: 11px; color: var(--text-muted); }
+.crenya-dashboard .cd-chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--bg-blue, #e8f1fb); color: var(--text-on-blue, #2f6db0); }
+.crenya-dashboard .cd-chip-warn { background: var(--bg-orange, #fdf0dc); color: var(--text-on-orange, #a3610a); }

@@ -13,7 +13,8 @@ SPEC = {
 	"app": "raysut_cement",
 	"app_title": "Raysut Cement",
 	"logo": "/assets/raysut_cement/images/raysut-cement-logo.svg",
-	"tiles": [{"label": "Raysut Cement", "link": "auto"}],
+	# the app opens on the attendance dashboard
+	"tiles": [{"label": "Raysut Cement", "link": "/desk/crenya-dashboard"}],
 	# One module ("Raysut Cement") with several areas, so each title is a distinct, non-module name
 	"rail": [
 		{
@@ -21,6 +22,7 @@ SPEC = {
 			"module": "Raysut Cement",
 			"icon": "calendar-check",
 			"items": [
+				("page", "Dashboard", "crenya-dashboard", "layout-dashboard"),
 				("workspace", "Home", "Crenya Attendance", "house"),
 				("doctype", "Employee Checkin", "Employee Checkin", "pointer"),
 				("doctype", "Attendance", "Attendance", "user-check"),

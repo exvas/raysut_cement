@@ -14,7 +14,7 @@ import os
 from collections import defaultdict
 
 import frappe
-from frappe.utils import flt, now_datetime
+from frappe.utils import add_days, cint, flt, getdate, now_datetime
 
 # TAMS pay code -> (Attendance status, Leave Type). Off days (OF) and holidays (HL) get no row.
 PAY_CODES = {
@@ -133,7 +133,7 @@ def import_timesheet(rows, company=None):
 	days = defaultdict(list)
 	for code, date, pay_code, in_time, out_time, hours, _ot in frappe.parse_json(rows):
 		if code in employees and pay_code in PAY_CODES:
-			days[(employees[code].name, date)].append((pay_code, in_time.strip(), out_time.strip(), flt(hours)))
+			days[(employees[code].name, date)].append((pay_code, in_time.strip(), out_time.strip(), tams_hours(hours)))
 	if not days:
 		return {"created": 0}
 
@@ -188,6 +188,68 @@ def import_timesheet(rows, company=None):
 		values,
 	)
 	return {"created": len(values)}
+
+
+def tams_hours(value):
+	"""TAMS stores hours as H.MM: 7.55 is 7 h 55 min, not 7.55 h."""
+	value = flt(value)
+	whole = int(value)
+	return round(whole + round((value - whole) * 100) / 60, 4)
+
+
+@frappe.whitelist(methods=["POST"])
+def rebuild_imported_hours(from_date, to_date, employee=None):
+	"""Re-derive worked hours on imported TAMS days (Attendance without a shift) from their punches.
+
+	The first import read TAMS hours as decimals (7.55 h instead of 7 h 55 min), and TAMS stores a night
+	as an evening check-in with the previous night's morning check-out on one date. Here a day's worked
+	time is last OUT - first IN; a night pairs its evening IN with the next day's morning OUT; a day with
+	one punch is a Missing Punch. Overtime and under time are then recalculated. Safe to repeat.
+	"""
+	from raysut_cement.raysut_cement.attendance.overtime import recalculate_overtime
+
+	frappe.only_for("System Manager")
+	filters = {
+		"docstatus": 1,
+		"shift": ("is", "not set"),
+		"attendance_date": ("between", [from_date, add_days(to_date, 1)]),  # one more day to close a night
+		"status": ("in", ["Present", "Half Day", "Work From Home"]),
+	}
+	if employee:
+		filters["employee"] = employee
+	rows = frappe.get_all(
+		"Attendance", filters=filters,
+		fields=["name", "employee", "attendance_date", "in_time", "out_time", "working_hours", "custom_missing_punch"],
+		order_by="employee, attendance_date",
+	)
+	following = {(r.employee, r.attendance_date): r for r in rows}
+
+	changed = 0
+	for r in rows:
+		if r.attendance_date > getdate(to_date):
+			continue
+		out_time, worked, missing = r.out_time, 0.0, 1
+		if r.in_time and r.out_time and r.out_time > r.in_time:
+			worked, missing = (r.out_time - r.in_time).total_seconds() / 3600, 0
+		elif r.in_time:
+			# night: this evening's IN ends with the next day's morning OUT, the one before that day's own IN
+			next_day = following.get((r.employee, add_days(r.attendance_date, 1)))
+			end = next_day.out_time if next_day else None
+			morning = end and (not next_day.in_time or end < next_day.in_time)
+			if morning and end > r.in_time and (end - r.in_time).total_seconds() < 86400:
+				out_time, worked, missing = end, (end - r.in_time).total_seconds() / 3600, 0
+			else:
+				out_time = None
+		worked = round(worked, 2)
+		if (flt(r.working_hours, 2), r.out_time, cint(r.custom_missing_punch)) != (worked, out_time, missing):
+			frappe.db.set_value(
+				"Attendance", r.name,
+				{"working_hours": worked, "out_time": out_time, "custom_missing_punch": missing},
+				update_modified=False,
+			)
+			changed += 1
+	recalculate_overtime(from_date, to_date, employee)
+	return changed
 
 
 def import_dir(path, company=None, batch_size=5000):
