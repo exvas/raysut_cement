@@ -279,6 +279,7 @@ override_whitelisted_methods = {
 fixtures = [
 	{"doctype": "Custom Field", "filters": [["module", "=", "Raysut Cement"]]},
 	{"doctype": "Property Setter", "filters": [["module", "=", "Raysut Cement"]]},
+	{"doctype": "Role", "filters": [["name", "=", "SuccessFactors Integration"]]},
 ]
 
 # HikCentral-style scheduling: Timetable (Shift Type) -> Shift Pattern -> Schedule
