@@ -55,18 +55,30 @@
 		constructor(page) {
 			this.page = page;
 			this.charts = {};
-			this.date = frappe.datetime.get_today();
-			this.company = frappe.defaults.get_user_default("Company");
-			this.company_field = page.add_field({
-				fieldname: "company", label: __("Company"), fieldtype: "Link", options: "Company",
-				default: this.company, change: () => {
-					const company = this.company_field.get_value();
-					if (company && company !== this.company) {
-						this.company = company;
-						this.refresh();
-					}
+			const today = frappe.datetime.get_today();
+			this.filters = { company: frappe.defaults.get_user_default("Company"), from_date: today, to_date: today, department: "", employee: "" };
+			this.queue_refresh = frappe.utils.debounce(() => this.refresh(), 300);
+			const field = (fieldname, label, fieldtype, options, get_query) => page.add_field({
+				fieldname, label, fieldtype, options, get_query, default: this.filters[fieldname],
+				change: () => {
+					if (!this.fields) return;
+					const value = this.fields[fieldname].get_value() || "";
+					if (value === this.filters[fieldname]) return;
+					this.filters[fieldname] = value;
+					if (fieldname === "company") this.set_field("department", "").set_field("employee", "");
+					if (fieldname === "department") this.set_field("employee", "");
+					this.queue_refresh();
 				},
 			});
+			this.fields = {
+				company: field("company", __("Company"), "Link", "Company"),
+				from_date: field("from_date", __("From Date"), "Date"),
+				to_date: field("to_date", __("To Date"), "Date"),
+				department: field("department", __("Department"), "Link", "Department", () => ({ filters: { company: this.filters.company } })),
+				employee: field("employee", __("Employee"), "Link", "Employee", () => ({
+					filters: { company: this.filters.company, status: "Active", ...(this.filters.department ? { department: this.filters.department } : {}) },
+				})),
+			};
 			page.set_primary_action(__("Refresh"), () => this.refresh(), "refresh");
 			page.add_inner_button(__("Daily Attendance"), () => this.open_report("Daily Attendance", true));
 			page.add_inner_button(__("Consolidated Attendance"), () => this.open_report("Consolidated Attendance"));
@@ -90,36 +102,49 @@
 					}
 				}
 			});
-			this.$body.on("change", ".rd-date-input", (e) => e.target.value && this.set_date(e.target.value));
+			this.$body.on("change", ".rd-date-input", (e) => e.target.value && this.set_range(e.target.value, e.target.value));
 			this.$body.on("click", ".rd-person", (e) => {
-				const d = this.data;
-				frappe.set_route("query-report", "Daily Attendance", {
-					company: d.company, employee: $(e.currentTarget).data("employee"),
-					from_date: month_start(d.date), to_date: d.date,
-				});
+				frappe.set_route("query-report", "Daily Attendance", { ...this.report_filters(), employee: $(e.currentTarget).data("employee") });
 			});
 			// keep "today" fresh while the page is open
 			this.timer = setInterval(() => {
-				if (frappe.get_route_str().endsWith("raysut-dashboard") && this.date === frappe.datetime.get_today()) this.refresh();
+				if (frappe.get_route_str().endsWith("raysut-dashboard") && this.filters.to_date === frappe.datetime.get_today()) this.refresh();
 			}, 5 * 60 * 1000);
 		}
 
-		go(days) {
-			this.set_date(frappe.datetime.add_days(this.data ? this.data.date : this.date, days));
+		// set a header field without its change handler starting a second refresh
+		set_field(fieldname, value) {
+			this.filters[fieldname] = value || "";
+			if ((this.fields[fieldname].get_value() || "") !== this.filters[fieldname]) this.fields[fieldname].set_value(value);
+			return this;
 		}
 
-		set_date(date) {
-			this.date = date;
-			this.refresh();
+		// the arrows move a day, or a whole range by its length
+		go(step) {
+			const d = this.data;
+			const days = d ? frappe.datetime.get_diff(d.to_date, d.from_date) + 1 : 1;
+			const add = (date) => frappe.datetime.add_days(date, step * days);
+			this.set_range(add(d ? d.from_date : this.filters.from_date), add(d ? d.to_date : this.filters.to_date));
+		}
+
+		set_range(from_date, to_date) {
+			this.set_field("from_date", from_date).set_field("to_date", to_date);
+			this.queue_refresh();
+		}
+
+		// the shown range (one day: the month so far) and the department/employee picked, for reports
+		report_filters(one_day = false) {
+			const d = this.data || {};
+			const to_date = d.to_date || this.filters.to_date;
+			const from_date = one_day || !d.single ? d.from_date || this.filters.from_date : d.period_from;
+			const filters = { company: this.filters.company, from_date, to_date };
+			if (this.filters.department) filters.department = this.filters.department;
+			if (this.filters.employee) filters.employee = this.filters.employee;
+			return filters;
 		}
 
 		open_report(name, one_day = false) {
-			const date = this.data ? this.data.date : this.date;
-			frappe.set_route("query-report", name, {
-				company: this.company,
-				from_date: one_day ? date : month_start(date),
-				to_date: date,
-			});
+			frappe.set_route("query-report", name, this.report_filters(one_day));
 		}
 
 		refresh() {
@@ -127,13 +152,12 @@
 			else this.$body.addClass("rd-loading");
 			frappe.call({
 				method: `${METHOD}.get_dashboard`,
-				args: { date: this.date, company: this.company },
+				args: { ...this.filters },
 				callback: ({ message }) => {
 					this.$body.removeClass("rd-loading");
 					if (!message) return;
 					this.data = message;
-					this.company = message.company;
-					if (this.company_field.get_value() !== message.company) this.company_field.set_value(message.company);
+					this.set_field("company", message.company);
 					this.render(message);
 				},
 				error: () => this.$body.removeClass("rd-loading"),
@@ -147,22 +171,23 @@
 
 		render(d) {
 			const k = d.kpi;
-			const pct = (n) => (k.active ? Math.round((100 * n) / k.active) : 0);
+			const pct = (n) => (k.days ? Math.round((100 * n) / k.days) : 0);
+			const share = d.single ? __("{0}% of staff") : __("{0}% of days");
 			this.$body.html(`
 				${this.notice(d)}
 				<div class="rd-daterow">
 					<div class="rd-datenav">
-						<button class="btn btn-default btn-sm rd-nav" data-action="prev" title="${__("Previous day")}">${icon("left")}</button>
+						<button class="btn btn-default btn-sm rd-nav" data-action="prev" title="${d.single ? __("Previous day") : __("Previous period")}">${icon("left")}</button>
 						<span class="rd-datewrap">
-							<button class="btn btn-default btn-sm rd-datepill" data-action="pick">${icon("calendar", 15)}<span>${as_date(d.date).format("dddd, DD MMM YYYY")}</span></button>
-							<input type="date" class="rd-date-input" value="${d.date}" max="${frappe.datetime.get_today()}" tabindex="-1" aria-label="${__("Date")}">
+							<button class="btn btn-default btn-sm rd-datepill" data-action="pick" title="${__("Pick a day")}">${icon("calendar", 15)}<span>${range_label(d)}</span></button>
+							<input type="date" class="rd-date-input" value="${d.to_date}" max="${frappe.datetime.get_today()}" tabindex="-1" aria-label="${__("Date")}">
 						</span>
-						<button class="btn btn-default btn-sm rd-nav" data-action="next" title="${__("Next day")}">${icon("right")}</button>
+						<button class="btn btn-default btn-sm rd-nav" data-action="next" title="${d.single ? __("Next day") : __("Next period")}">${icon("right")}</button>
 					</div>
 					<div class="rd-facts">
 						<button class="rd-fact" data-drill="day:active" data-label="${__("Active employees")}">${__("Active employees")} <b>${num(k.active)}</b></button>
 						<span class="rd-fact-sep">·</span>
-						<span class="rd-fact">${__("Punches that day")} <b>${num(d.punches.on_day)}</b></span>
+						<span class="rd-fact">${d.single ? __("Punches that day") : __("Punches")} <b>${num(d.punches.count)}</b></span>
 					</div>
 				</div>
 
@@ -171,13 +196,13 @@
 						<div class="rd-who">
 							${this.donut(k)}
 							<div class="rd-who-tiles">
-								<h3 class="rd-card-title">${__("Who was where")}</h3>
+								<h3 class="rd-card-title">${d.single ? __("Who was where") : __("Days by status")}</h3>
 								<div class="rd-tiles">
 									${DAY_KEYS.map((key) => `
 										<button class="rd-tile rd-t-${key}" data-drill="day:${key}" data-label="${TONES[key].label}">
 											<span class="rd-tile-label"><i class="rd-dot"></i>${TONES[key].label}</span>
 											<span class="rd-tile-value">${num(k[key])}</span>
-											<span class="rd-tile-sub">${{ not_marked: __("no attendance yet"), missing_punch: __("one punch only") }[key] || __("{0}% of staff", [pct(k[key])])}</span>
+											<span class="rd-tile-sub">${{ not_marked: __("no attendance yet"), missing_punch: __("one punch only") }[key] || __(share, [pct(k[key])])}</span>
 										</button>`).join("")}
 								</div>
 							</div>
@@ -201,7 +226,7 @@
 
 				<div class="rd-grid">
 					<section class="rd-card rd-wide">
-						<h3 class="rd-card-title">${__("Last {0} days", [d.trend.labels.length])}</h3>
+						<h3 class="rd-card-title">${d.single ? __("Last {0} days", [d.trend.labels.length]) : d.trend.monthly ? __("Month by month") : __("Day by day")}</h3>
 						<div class="rd-chart" data-chart="trend"></div>
 					</section>
 					<section class="rd-card">
@@ -213,12 +238,13 @@
 						<div class="rd-chart" data-chart="ot"></div>
 					</section>
 					<section class="rd-card">
-						<h3 class="rd-card-title">${__("Top overtime this month")}</h3>
+						<h3 class="rd-card-title">${d.single ? __("Top overtime this month") : __("Top overtime")}</h3>
 						${this.people(d.top_overtime, (r) => `<td class="rd-num">${hours(r.ot1)}</td><td class="rd-num">${hours(r.ot2)}</td>`, [__("OT1"), __("OT2")])}
 					</section>
 					<section class="rd-card">
-						<h3 class="rd-card-title">${__("Follow up that day")}</h3>
-						${this.people(d.exceptions, (r) => `<td class="rd-num"><span class="rd-pill rd-pill-missing">${esc(r.issue)}</span></td>`, [__("Issue")])}
+						<h3 class="rd-card-title">${d.single ? __("Follow up that day") : __("Follow up")}</h3>
+						${this.people(d.exceptions, (r) => `${d.single ? "" : `<td class="rd-num rd-muted">${as_date(r.date).format("DD MMM")}</td>`}
+							<td class="rd-num"><span class="rd-pill rd-pill-missing">${esc(r.issue)}</span></td>`, [...(d.single ? [] : [__("Date")]), __("Issue")])}
 					</section>
 				</div>
 			`);
@@ -227,16 +253,16 @@
 
 		notice(d) {
 			const lines = [];
-			if (d.date !== d.requested_date) {
-				const requested = as_date(d.requested_date);
-				const what = d.requested_date === frappe.datetime.get_today()
+			if (d.single && d.to_date !== d.requested_to) {
+				const requested = as_date(d.requested_to);
+				const what = d.requested_to === frappe.datetime.get_today()
 					? __("Today ({0})", [requested.format("DD MMM")]) : requested.format("ddd, DD MMM YYYY");
 				lines.push(__("{0} isn't marked yet — a day is marked once it ends. You're seeing <b>{1}</b>, the latest marked day.",
-					[what, as_date(d.date).format("ddd, DD MMM YYYY")]));
+					[what, as_date(d.to_date).format("ddd, DD MMM YYYY")]));
 			}
 			// a day whose punches stop early (devices not synced since) shows everyone without a check-out
 			const last = d.punches.last && moment(d.punches.last);
-			if (last && last.hours() < 12 && d.kpi.missing_punch) {
+			if (d.single && last && last.hours() < 12 && d.kpi.missing_punch) {
 				lines.push(__("Punches for this day stop at {0}: check-outs after that have not reached the system, so they show as missing punch.",
 					[last.format("HH:mm")]));
 			}
@@ -258,7 +284,7 @@
 				offset += len;
 				return arc;
 			}).join("");
-			const pct = k.active ? Math.round((100 * k.present) / k.active) : 0;
+			const pct = k.days ? Math.round((100 * k.present) / k.days) : 0;
 			return `<div class="rd-donut">
 				<svg viewBox="0 0 180 180" role="img" aria-label="${__("{0}% present", [pct])}">
 					<circle r="${r}" cx="90" cy="90" fill="none" style="stroke:var(--gray-100, #f3f3f3)" stroke-width="16"/>${arcs}
@@ -291,11 +317,11 @@
 			];
 			const total = parts.reduce((s, p) => s + (p[2] || 0), 0);
 			const share = (v) => (total ? (100 * (v || 0)) / total : 0);
-			const from = as_date(month_start(d.date)), to = as_date(d.date);
+			const from = as_date(d.period_from), to = as_date(d.to_date);
 			return `<section class="rd-card">
 				<div class="rd-card-head">
-					<h3 class="rd-card-title">${__("This month so far")}</h3>
-					<span class="rd-range">${from.format("DD")} – ${to.format("DD MMM YYYY")}</span>
+					<h3 class="rd-card-title">${d.single ? __("This month so far") : __("Hours in this period")}</h3>
+					<span class="rd-range">${from.format(from.year() === to.year() ? "DD MMM" : "DD MMM YYYY")} – ${to.format("DD MMM YYYY")}</span>
 				</div>
 				<div class="rd-stats">
 					${tiles.map(([key, icon_name, label, value, tone]) => `
@@ -331,7 +357,7 @@
 				</tr>`;
 			}).join("");
 			return `<section class="rd-card">
-				<h3 class="rd-card-title">${__("By location")}</h3>
+				<h3 class="rd-card-title">${__("By location")}${this.data.single ? "" : ` <span class="rd-muted">· ${__("days")}</span>`}</h3>
 				${rows.length ? `<div class="rd-table-wrap"><table class="rd-table rd-loc-table">
 					<thead><tr><th>${__("Location")}</th><th>${__("Staff")}</th><th>${__("Present")}</th><th>${__("Missing punch")}</th>
 						<th>${__("Absent")}</th><th>${__("Leave")}</th><th>${__("Not marked")}</th><th>${__("Split")}</th></tr></thead>
@@ -397,11 +423,16 @@
 			const d = this.data;
 			frappe.call({
 				method: `${METHOD}.get_kpi_employees`,
-				args: { date: d.date, company: d.company, kpi, location: location || null },
+				args: {
+					company: d.company, kpi, from_date: d.from_date, to_date: d.to_date, location: location || null,
+					department: this.filters.department || null, employee: this.filters.employee || null,
+				},
 				freeze: true,
-				callback: ({ message: rows = [] }) => {
+				callback: ({ message }) => {
+					const { rows = [], total = 0 } = message || {};
+					const dated = !d.single && kpi !== "active";
 					const dialog = new frappe.ui.Dialog({
-						title: `${label} · ${as_date(d.date).format("ddd, DD MMM YYYY")} (${rows.length})`,
+						title: `${label} · ${range_label(d, "ddd, DD MMM YYYY")} (${num(total)})`,
 						size: "extra-large",
 						fields: [
 							{ fieldtype: "Data", fieldname: "search", placeholder: __("Search name, ID, department or designation") },
@@ -417,13 +448,14 @@
 						return `<span class="rd-badge rd-badge-${tone}">${esc(r.leave_type || r.status)}</span>`;
 					};
 					$list.html(rows.length ? `<div class="rd-dialog-list rd-table-wrap"><table class="rd-table rd-people-table">
-						<colgroup><col style="width:48px"><col><col style="width:22%"><col style="width:200px">
+						<colgroup><col style="width:48px">${dated ? `<col style="width:104px">` : ""}<col><col style="width:22%"><col style="width:200px">
 							<col style="width:72px"><col style="width:72px"><col style="width:72px"></colgroup>
-						<thead><tr><th class="rd-num">#</th><th>${__("Employee")}</th><th>${__("Designation")}</th><th>${__("Status")}</th>
+						<thead><tr><th class="rd-num">#</th>${dated ? `<th>${__("Date")}</th>` : ""}<th>${__("Employee")}</th><th>${__("Designation")}</th><th>${__("Status")}</th>
 							<th class="rd-num">${__("In")}</th><th class="rd-num">${__("Out")}</th><th class="rd-num">${__("Hours")}</th></tr></thead>
 						<tbody>${rows.map((r, i) => `<tr class="rd-item" data-attendance="${esc(r.attendance || "")}" data-employee="${esc(r.employee)}"
-							data-search="${esc(`${r.employee} ${r.employee_name} ${r.department || ""} ${r.designation || ""}`.toLowerCase())}">
+							data-search="${esc(`${r.employee} ${r.employee_name} ${r.department || ""} ${r.designation || ""} ${r.date ? as_date(r.date).format("DD MMM") : ""}`.toLowerCase())}">
 							<td class="rd-num rd-muted">${i + 1}</td>
+							${dated ? `<td class="rd-time">${as_date(r.date).format("ddd DD MMM")}</td>` : ""}
 							<td><div class="rd-name">${esc(r.employee_name)}</div>
 								<div class="rd-dept">${esc(r.employee)}${r.department ? ` · ${esc(r.department.replace(/ - [A-Z]+$/, ""))}` : ""}</div></td>
 							<td class="rd-desig">${esc(r.designation || "")}</td>
@@ -437,7 +469,9 @@
 						: `<div class="rd-empty">${__("Nobody")}</div>`);
 					const count = () => {
 						const shown = $list.find(".rd-item").filter((_, tr) => tr.style.display !== "none").length;
-						$list.find(".rd-dialog-foot").text(__("Showing {0} of {1}", [shown, rows.length]));
+						$list.find(".rd-dialog-foot").text(total > rows.length
+							? __("Showing {0} of the first {1} ({2} in all)", [shown, rows.length, num(total)])
+							: __("Showing {0} of {1}", [shown, rows.length]));
 					};
 					$list.find(".rd-item").on("click", (e) => {
 						const $row = $(e.currentTarget);
@@ -469,7 +503,7 @@
 		open_month(key) {
 			const reports = { worked_hours: "Consolidated Attendance", under_time_hours: "Under Time" };
 			if (reports[key]) return this.open_report(reports[key]);
-			const d = this.data;
+			const { company, from_date, to_date, department, employee } = this.report_filters();
 			const filters = {
 				ot1_hours: { custom_ot1_hours: [">", 0] },
 				ot2_hours: { custom_ot2_hours: [">", 0] },
@@ -477,15 +511,18 @@
 				missing_punch_days: { custom_missing_punch: 1 },
 			}[key];
 			frappe.set_route("List", "Attendance", {
-				company: d.company, docstatus: 1,
-				attendance_date: ["between", [month_start(d.date), d.date]],
+				company, docstatus: 1, attendance_date: ["between", [from_date, to_date]],
+				...(department ? { department } : {}), ...(employee ? { employee } : {}),
 				...filters,
 			});
 		}
 	}
 
-	// frappe.datetime.month_start() always uses today, so take the month of the given date
-	function month_start(date) {
-		return moment(date).startOf("month").format("YYYY-MM-DD");
+	// "Thursday, 22 Oct 2026", or "01 Oct – 22 Oct 2026 · 22 days"
+	function range_label(d, day_format = "dddd, DD MMM YYYY") {
+		const from = as_date(d.from_date), to = as_date(d.to_date);
+		if (d.single) return to.format(day_format);
+		const days = to.diff(from, "days") + 1;
+		return `${from.format(from.year() === to.year() ? "DD MMM" : "DD MMM YYYY")} – ${to.format("DD MMM YYYY")} · ${__("{0} days", [days])}`;
 	}
 })();
