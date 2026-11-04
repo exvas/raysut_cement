@@ -17,7 +17,10 @@
 		frappe.route_options = null;
 		if (company && company !== dashboard.filters.company) {
 			dashboard.data = null;
-			dashboard.set_field("company", company).set_field("department", "").set_field("employee", "");
+			// the tile may give part of the name ("Pioneer Cement"): keep it out of the Link field, whose
+			// check would clear it and fall back to the default company; refresh() puts the full name there
+			dashboard.filters.company = company;
+			dashboard.set_field("department", "").set_field("employee", "");
 		}
 		dashboard.refresh();
 	};
