@@ -7,3 +7,4 @@
 raysut_cement.patches.set_leave_type_abbreviations
 raysut_cement.patches.consolidated_attendance_own_total_row
 raysut_cement.patches.rename_crenya_to_raysut
+raysut_cement.patches.create_group_companies

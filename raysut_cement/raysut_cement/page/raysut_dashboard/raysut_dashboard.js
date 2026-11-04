@@ -10,7 +10,16 @@
 	};
 
 	frappe.pages["raysut-dashboard"].on_page_show = function (wrapper) {
-		wrapper.raysut_dashboard && wrapper.raysut_dashboard.refresh();
+		const dashboard = wrapper.raysut_dashboard;
+		if (!dashboard) return;
+		// each company's desktop tile opens this page with ?company=...
+		const company = frappe.route_options && frappe.route_options.company;
+		frappe.route_options = null;
+		if (company && company !== dashboard.filters.company) {
+			dashboard.data = null;
+			dashboard.set_field("company", company).set_field("department", "").set_field("employee", "");
+		}
+		dashboard.refresh();
 	};
 
 	const METHOD = "raysut_cement.raysut_cement.page.raysut_dashboard.raysut_dashboard";
@@ -160,7 +169,11 @@
 					this.set_field("company", message.company);
 					this.render(message);
 				},
-				error: () => this.$body.removeClass("rd-loading"),
+				error: () => {
+					this.$body.removeClass("rd-loading");
+					// nothing shown yet (e.g. a tile for a company that isn't set up): say so instead of leaving the skeleton
+					if (!this.data) this.$body.html(`<div class="rd-card rd-empty">${__("Pick a company in the Company filter to see its attendance.")}</div>`);
+				},
 			});
 		}
 

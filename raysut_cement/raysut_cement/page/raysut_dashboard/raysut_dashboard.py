@@ -22,7 +22,7 @@ OT_MONTHS = 6
 @frappe.whitelist()
 def get_dashboard(from_date=None, to_date=None, company=None, department=None, employee=None):
 	"""One day (from = to) or a date range at a glance, for the whole company, a department or one employee."""
-	company = company or frappe.defaults.get_user_default("Company") or frappe.get_all("Company", pluck="name", limit=1)[0]
+	company = resolve_company(company)
 	employees = active_employees(company, department, employee)
 	names = list(employees) or [""]
 
@@ -65,6 +65,20 @@ def get_dashboard(from_date=None, to_date=None, company=None, department=None, e
 		"exceptions": exceptions(employees, in_range),
 		"punches": punches_between(start, end, names),
 	}
+
+
+def resolve_company(company=None):
+	"""The company asked for: its name, or a part of it (a desktop tile says just "Pioneer Cement"), else the user's default."""
+	if not company:
+		return frappe.defaults.get_user_default("Company") or frappe.get_list("Company", pluck="name", limit=1)[0]
+	if frappe.db.exists("Company", company):
+		return company
+	match = frappe.get_list("Company", filters={"abbr": company}, pluck="name", limit=2) or frappe.get_list(
+		"Company", filters={"company_name": ("like", f"%{company}%")}, pluck="name", limit=2
+	)
+	if len(match) != 1:
+		frappe.throw(_("No single company matches {0}. Pick the company in the Company filter.").format(frappe.bold(company)))
+	return match[0]
 
 
 def date_range(from_date, to_date):
@@ -141,6 +155,7 @@ def get_kpi_employees(company, kpi, from_date=None, to_date=None, location=None,
 	"""The employees (one day) or employee-days (a range) behind a figure, counted exactly as on the cards."""
 	if kpi != "active" and kpi not in DRILL_DOWN:
 		frappe.throw(_("Unknown figure {0}").format(kpi))
+	company = resolve_company(company)
 	employees = active_employees(company, department, employee)
 	if location:
 		employees = {n: e for n, e in employees.items() if (e.branch or _("Not Set")) == location}

@@ -1,0 +1,19 @@
+{
+ "app": "raysut_cement",
+ "creation": "2026-11-04 10:44:54.114902",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon_type": "App",
+ "idx": 21,
+ "label": "Pioneer Cement",
+ "link": "/desk/raysut-dashboard?company=Pioneer%20Cement",
+ "link_type": "External",
+ "logo_url": "/assets/raysut_cement/images/pioneer-cement-logo.png",
+ "modified": "2026-11-04 10:44:54.114902",
+ "modified_by": "Administrator",
+ "name": "Pioneer Cement",
+ "owner": "Administrator",
+ "roles": [],
+ "standard": 1
+}

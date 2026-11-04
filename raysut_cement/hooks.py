@@ -15,7 +15,7 @@ required_apps = ["frappe/erpnext", "frappe/hrms"]
 add_to_apps_screen = [
 	{
 		"name": "raysut_cement",
-		"logo": "/assets/raysut_cement/images/raysut-cement-logo.svg",
+		"logo": "/assets/raysut_cement/images/raysut-cement-logo.png",
 		"title": "Raysut Cement",
 		"route": "/desk/raysut-dashboard",
 		"has_permission": "raysut_cement.raysut_cement.settings.has_app_permission",

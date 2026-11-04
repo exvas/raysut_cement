@@ -12,9 +12,15 @@ import re
 SPEC = {
 	"app": "raysut_cement",
 	"app_title": "Raysut Cement",
-	"logo": "/assets/raysut_cement/images/raysut-cement-logo.svg",
-	# the app opens on the attendance dashboard
-	"tiles": [{"label": "Raysut Cement", "link": "/desk/raysut-dashboard"}],
+	"logo": "/assets/raysut_cement/images/raysut-cement-logo.png",
+	# one tile per company, all on the attendance dashboard; ?company= sets its Company filter (a part of the name will do)
+	"tiles": [
+		{"label": "Raysut Cement", "link": "/desk/raysut-dashboard?company=Raysut%20Cement"},
+		{"label": "Pioneer Cement", "link": "/desk/raysut-dashboard?company=Pioneer%20Cement",
+		 "logo": "/assets/raysut_cement/images/pioneer-cement-logo.png"},
+		{"label": "Sohar Cement", "link": "/desk/raysut-dashboard?company=Sohar%20Cement",
+		 "logo": "/assets/raysut_cement/images/sohar-cement-logo.png"},
+	],
 	# One module ("Raysut Cement") with several areas, so each title is a distinct, non-module name
 	"rail": [
 		{
