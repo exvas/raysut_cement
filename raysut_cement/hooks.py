@@ -27,7 +27,7 @@ add_to_apps_screen = [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/raysut_cement/css/raysut_cement.css"
-# app_include_js = "/assets/raysut_cement/js/raysut_cement.js"
+app_include_js = "/assets/raysut_cement/js/desk_shortcuts.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/raysut_cement/css/raysut_cement.css"
