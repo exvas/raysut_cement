@@ -3,12 +3,15 @@
 
 """Pioneer Cement and Sohar Cement as companies of their own, set up like Raysut Cement.
 
-Each gets Raysut's country, currency, chart of accounts template and holiday list, and a copy of its
-department list; their own shifts, employees and settings follow once the group sends them.
+A company already there under a longer name (e.g. "Pioneer Cement Industries") is used as it is;
+otherwise it is created with Raysut's country, currency and chart of accounts template. Either way it
+gets Raysut's holiday list when it has none, and the Raysut departments it doesn't have yet. Their own
+shifts, employees and settings follow once the group sends them.
 """
 
 import frappe
 
+# name to look for (and to create with), abbreviation for a new one
 COMPANIES = {"Pioneer Cement": "PC", "Sohar Cement": "SC"}
 
 
@@ -21,9 +24,16 @@ def execute():
 def create_companies(source):
 	src = frappe.get_doc("Company", source)
 	for name, abbr in COMPANIES.items():
-		if frappe.db.exists("Company", {"company_name": name}) or frappe.db.exists("Company", {"abbr": abbr}):
-			continue
-		company = frappe.get_doc(
+		company = frappe.get_all("Company", filters={"company_name": ("like", f"{name}%")}, pluck="name", limit=1)
+		company = company[0] if company else new_company(src, name, abbr)
+		if src.default_holiday_list and not frappe.db.get_value("Company", company, "default_holiday_list"):
+			frappe.db.set_value("Company", company, "default_holiday_list", src.default_holiday_list)
+		copy_departments(src.name, company)
+
+
+def new_company(src, name, abbr):
+	return (
+		frappe.get_doc(
 			{
 				"doctype": "Company",
 				"company_name": name,
@@ -36,8 +46,10 @@ def create_companies(source):
 				else None,
 				"default_holiday_list": src.default_holiday_list,
 			}
-		).insert(ignore_permissions=True)
-		copy_departments(src.name, company.name)
+		)
+		.insert(ignore_permissions=True)
+		.name
+	)
 
 
 def copy_departments(source, target):
