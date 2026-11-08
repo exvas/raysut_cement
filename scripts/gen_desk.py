@@ -36,6 +36,7 @@ SPEC = {
 				("section", "Reports", "notepad-text", [
 					("report", "Consolidated Attendance", "Consolidated Attendance"),
 					("report", "Daily Attendance", "Daily Attendance"),
+					("report", "Attendance Detail Report", "Attendance Detail Report"),
 					("report", "Under Time", "Under Time"),
 					("report", "Shift Roster", "Shift Roster"),
 					("report", "Flexible Shift Work Hours", "Flexible Shift Work Hours"),

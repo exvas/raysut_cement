@@ -1,0 +1,80 @@
+<style>
+	.adr { font-size: 10px; }
+	.adr h2 { text-align: center; margin: 0; font-size: 16px; }
+	.adr h3 { text-align: center; margin: 2px 0 4px; font-size: 13px; }
+	.adr .adr-range { text-align: right; font-weight: 600; border-bottom: 2px solid #c00; padding-bottom: 2px; }
+	.adr .adr-emp { width: 100%; margin: 4px 0; }
+	.adr .adr-emp td { padding: 1px 4px; }
+	.adr .adr-emp .lbl { font-weight: 600; white-space: nowrap; }
+	.adr table.adr-days { width: 100%; border-collapse: collapse; }
+	.adr .adr-days th { background: #f6d5d5; text-align: left; padding: 3px; }
+	.adr .adr-days td { padding: 2px 3px; }
+	.adr .adr-days td.rm, .adr .adr-days th.rm { padding-left: 10px; }
+	.adr .adr-days td.n, .adr .adr-days th.n { text-align: right; }
+	.adr .adr-days tr.off td { background: #d9d9d9; }
+	.adr .adr-days tr.total td { border-top: 1px dashed #000; font-weight: 700; }
+	.adr .c-AB { color: #c00; } .adr .c-OF { color: #1f4fd1; } .adr .c-MP { color: #8a2be2; } .adr .c-NM { color: #d97706; }
+	.adr .c-leave { color: #16a34a; }
+	.adr .adr-block { page-break-after: always; }
+	.adr .adr-block:last-child { page-break-after: auto; }
+</style>
+{% var blocks = []; var current = null;
+	for (var i = 0; i < data.length; i++) {
+		var r = data[i];
+		if (!r || !r.employee) continue;
+		if (!current || current.employee !== r.employee) { current = { employee: r.employee, head: r, rows: [] }; blocks.push(current); }
+		current.rows.push(r);
+	}
+	var plain = { "PR": 1, "WFH": 1, "AB": 1, "OF": 1, "MP": 1, "NM": 1, "HD": 1 };
+%}
+<div class="adr">
+{% for (var b = 0; b < blocks.length; b++) { var h = blocks[b].head; %}
+	<div class="adr-block">
+		<h2>{%= filters.company %}</h2>
+		<h3>{%= __("Detail Report") %}</h3>
+		<div class="adr-range">{%= __("Date") %}: {%= frappe.datetime.str_to_user(filters.from_date) %} - {%= frappe.datetime.str_to_user(filters.to_date) %}</div>
+		<table class="adr-emp">
+			<tr>
+				<td class="lbl">{%= __("Employee") %}:</td><td>{%= h.emp_no %}</td>
+				<td><b>{%= h.employee_name %}</b></td>
+				<td class="lbl">{%= __("Card No") %}:</td><td>{%= h.card_no %}</td>
+				<td class="lbl">{%= __("Dept") %}:</td><td>{%= h.department %}</td>
+			</tr>
+			<tr><td class="lbl">{%= __("Designation") %}:</td><td colspan="6">{%= h.designation %}</td></tr>
+		</table>
+		<table class="adr-days">
+			<thead>
+				<tr>
+					<th>{%= __("Sr") %}</th><th colspan="2">{%= __("Date") %}</th><th></th>
+					<th>{%= __("In Time") %}</th><th>{%= __("Out Time") %}</th>
+					<th class="n">{%= __("Wk Hrs") %}</th><th class="n">{%= __("Tot Hrs") %}</th><th class="n">{%= __("Base Hrs") %}</th>
+					<th class="n">{%= __("Reg Hrs") %}</th><th class="n">{%= __("OT1") %}</th><th class="n">{%= __("OT2") %}</th>
+					<th class="n">{%= __("UT") %}</th><th class="rm">{%= __("Remarks") %}</th>
+					<th>{%= __("In Excep") %}</th><th>{%= __("Out Excep") %}</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for (var j = 0; j < blocks[b].rows.length; j++) { var r = blocks[b].rows[j]; %}
+				{% if (r.is_total) { %}
+				<tr class="total">
+					<td colspan="6" style="text-align:center">{%= __("TOTAL") %}</td>
+					<td class="n">{%= r.wk %}</td><td class="n">{%= r.tot %}</td><td></td>
+					<td class="n">{%= r.reg %}</td><td class="n">{%= r.ot1 %}</td><td class="n">{%= r.ot2 %}</td><td class="n">{%= r.ut %}</td>
+					<td colspan="3"></td>
+				</tr>
+				{% } else { %}
+				<tr class="{%= r.is_off ? 'off' : '' %}">
+					<td>{%= r.sr %}</td><td>{%= r.day %}</td><td>{%= frappe.datetime.str_to_user(r.date) %}</td>
+					<td class="{%= plain[r.code] ? 'c-' + r.code : (r.code ? 'c-leave' : '') %}"><b>{%= r.code %}</b></td>
+					<td>{%= r.in_time || "" %}</td><td>{%= r.out_time || "" %}</td>
+					<td class="n">{%= r.wk %}</td><td class="n">{%= r.tot %}</td><td class="n">{%= r.base || "-" %}</td>
+					<td class="n">{%= r.reg %}</td><td class="n">{%= r.ot1 %}</td><td class="n">{%= r.ot2 %}</td><td class="n">{%= r.ut %}</td>
+					<td class="rm">{%= r.remarks || "" %}</td><td>{%= r.in_excep || "" %}</td><td>{%= r.out_excep || "" %}</td>
+				</tr>
+				{% } %}
+			{% } %}
+			</tbody>
+		</table>
+	</div>
+{% } %}
+</div>
