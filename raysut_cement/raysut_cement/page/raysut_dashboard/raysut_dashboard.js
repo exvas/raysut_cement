@@ -379,7 +379,7 @@
 						<th>${__("Absent")}</th><th>${__("Leave")}</th><th>${__("Not marked")}</th><th>${__("Split")}</th></tr></thead>
 					<tbody>${body}</tbody></table></div>` : `<div class="rd-empty">${__("No employees")}</div>`}
 				${rows.some((r) => r.name === not_set) ? `<div class="rd-tip">${icon("info", 16)}
-					<span>${__("Tip: set a Branch on each employee to split staff by site — e.g. Raysut Plant, Duqm, Muscat.")}</span></div>` : ""}
+					<span>${__("Tip: set a Branch on each employee to split staff by site — e.g. plant, head office, sites.")}</span></div>` : ""}
 			</section>`;
 		}
 

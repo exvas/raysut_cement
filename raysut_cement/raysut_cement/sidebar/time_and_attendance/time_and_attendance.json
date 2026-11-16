@@ -1,6 +1,6 @@
 {
  "app": "raysut_cement",
- "creation": "2026-11-08 08:47:49.357072",
+ "creation": "2026-11-16 14:42:28.616843",
  "docstatus": 0,
  "doctype": "Sidebar",
  "header_icon": "calendar-check",
@@ -279,11 +279,11 @@
    "type": "Link"
   }
  ],
- "modified": "2026-11-08 08:47:49.357072",
+ "modified": "2026-11-16 14:42:28.616843",
  "modified_by": "Administrator",
  "module": "Raysut Cement",
- "name": "Raysut Attendance",
+ "name": "Time & Attendance",
  "owner": "Administrator",
  "standard": 1,
- "title": "Raysut Attendance"
+ "title": "Time & Attendance"
 }

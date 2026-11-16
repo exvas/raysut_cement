@@ -24,7 +24,7 @@ SPEC = {
 	# One module ("Raysut Cement") with several areas, so each title is a distinct, non-module name
 	"rail": [
 		{
-			"title": "Raysut Attendance",
+			"title": "Time & Attendance",
 			"module": "Raysut Cement",
 			"icon": "calendar-check",
 			"items": [
@@ -91,7 +91,7 @@ TYPES = {"doctype": "DocType", "report": "Report", "workspace": "Workspace", "pa
 
 
 def scrub(s):
-	return s.replace(" ", "_").replace("-", "_").lower()
+	return re.sub(r"[^a-z0-9]+", "_", s.lower().replace("&", " and ")).strip("_")
 
 
 def slug(s):
