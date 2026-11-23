@@ -168,11 +168,18 @@ def import_employees(rows, company, branch=None, shifts=None):
 		if existing and employee.company != company:
 			result["errors"].append(f"{number}: already used by {existing} in {employee.company}")
 			continue
+		if r.get("employee_name"):  # one full name: first, middle and last word(s)
+			words = cstr(r["employee_name"]).split()
+			r["first_name"], r["middle_name"], r["last_name"] = (
+				(words[0], " ".join(words[1:-1]), words[-1]) if len(words) > 1 else (words[0], "", "")
+			)
 		employee.update({
 			"first_name": cstr(r.get("first_name")).strip(),
+			"middle_name": cstr(r.get("middle_name")).strip() if "middle_name" in r else employee.middle_name,
 			"last_name": cstr(r.get("last_name")).strip(),
 			"company": company,
-			"status": employee.status if existing else "Active",
+			"status": r.get("status") or (employee.status if existing else "Active"),
+			"custom_id_card_no": cstr(r.get("id_card_no")).strip() or employee.get("custom_id_card_no"),
 			"date_of_joining": r.get("date_of_joining") or employee.date_of_joining,
 			"department": ensure_department(r.get("department"), company),
 			"designation": ensure_designation(r.get("designation")),
