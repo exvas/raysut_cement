@@ -71,7 +71,9 @@ def set_country_currency(company, country, currency, result):
 		result["done"].append(f"country {country}")
 
 
-def set_holiday_lists(company, prefix, weekly_off, years, result):
+def make_holiday_lists(prefix, weekly_off, years, result):
+	"""(year, name) of "<prefix> <year>" lists with those weekdays off; an empty weekly_off gives a list
+	with no days off (for staff whose off days come from the roster)."""
 	lists = []
 	for year in years or [getdate().year]:
 		name = f"{prefix} {year}"
@@ -90,7 +92,11 @@ def set_holiday_lists(company, prefix, weekly_off, years, result):
 			doc.insert()
 			result["done"].append(f"holiday list {name}")
 		lists.append((int(year), name))
+	return lists
 
+
+def set_holiday_lists(company, prefix, weekly_off, years, result):
+	lists = make_holiday_lists(prefix, weekly_off, years, result)
 	if lists:
 		frappe.db.set_value("Company", company, "default_holiday_list", lists[0][1])
 	if not frappe.db.exists("DocType", "Holiday List Assignment"):
@@ -116,6 +122,37 @@ def set_holiday_lists(company, prefix, weekly_off, years, result):
 
 
 @frappe.whitelist(methods=["POST"])
+def assign_employee_holiday_lists(employee_numbers, prefix, weekly_off=None, years=None):
+	"""Give these employees their own "<prefix> <year>" lists (e.g. shift workers whose off days come
+	from the roster), over the company's. HRMS 16 reads an Employee assignment, older HRMS the
+	employee's Holiday List field."""
+	frappe.only_for("System Manager")
+	result = {"done": [], "errors": []}
+	lists = make_holiday_lists(prefix, frappe.parse_json(weekly_off or "[]"), frappe.parse_json(years or "[]"), result)
+	by_assignment = frappe.db.exists("DocType", "Holiday List Assignment")
+	count = 0
+	for number in frappe.parse_json(employee_numbers):
+		employee = frappe.db.get_value("Employee", {"employee_number": cstr(number)})
+		if not employee:
+			result["errors"].append(f"{number}: not on the system")
+			continue
+		if not by_assignment:
+			frappe.db.set_value("Employee", employee, "holiday_list", lists[0][1])
+			count += 1
+			continue
+		for year, name in lists:
+			if frappe.db.exists("Holiday List Assignment", {"assigned_to": employee, "holiday_list": name, "docstatus": 1}):
+				continue
+			frappe.get_doc({
+				"doctype": "Holiday List Assignment", "applicable_for": "Employee", "assigned_to": employee,
+				"holiday_list": name, "from_date": f"{year}-01-01",
+			}).submit()
+		count += 1
+	result["done"].append(f"{count} employees on {prefix}")
+	return result
+
+
+@frappe.whitelist(methods=["POST"])
 def import_shift_types(shifts):
 	"""shifts: [{name, start_time, end_time, required_hours, ot_min_hours, ot_max_hours, ot_policy}]"""
 	frappe.only_for("System Manager")
@@ -128,7 +165,14 @@ def import_shift_types(shifts):
 			"custom_ot_min_hours": flt(s.get("ot_min_hours")),
 			"custom_ot_max_hours": flt(s.get("ot_max_hours")),
 			"ot_policy": s.get("ot_policy"),
+			"begin_check_in_before_shift_start_time": cint(s.get("check_in_before")) or 60,
+			# punches this long after the end still belong to the shift, so overtime counts
+			"allow_check_out_after_shift_end_time": cint(s.get("check_out_after")) or 300,
+			"working_hours_threshold_for_half_day": flt(s.get("half_day_below")),
+			"working_hours_threshold_for_absent": flt(s.get("absent_below")),
 		}
+		if s.get("undertime_tolerance") is not None:
+			values["flexi_undertime_tolerance"] = cint(s["undertime_tolerance"])
 		if frappe.db.exists("Shift Type", s["name"]):
 			doc = frappe.get_doc("Shift Type", s["name"])
 			doc.update(values)
@@ -142,9 +186,6 @@ def import_shift_types(shifts):
 			"process_attendance_after": nowdate(),
 			"determine_check_in_and_check_out": "Alternating entries as IN and OUT during the same shift",
 			"working_hours_calculation_based_on": "First Check-in and Last Check-out",
-			"begin_check_in_before_shift_start_time": 60,
-			# punches up to 5 hours after the end still belong to the shift, so overtime counts
-			"allow_check_out_after_shift_end_time": 300,
 			**values,
 		}).insert()
 		result["created"].append(s["name"])
@@ -152,12 +193,13 @@ def import_shift_types(shifts):
 
 
 @frappe.whitelist(methods=["POST"])
-def import_employees(rows, company, branch=None, shifts=None):
+def import_employees(rows, company, branch=None, shifts=None, move=None):
 	"""rows: {name, employee_number, first_name, last_name, date_of_joining, department, designation,
 	company_email, default_shift}. name is the employee ID the company uses (e.g. HR-EMP-50002).
 	shifts maps the file's shift name to the Shift Type. Existing employees (same number) are updated."""
 	frappe.only_for("System Manager")
 	shifts = frappe.parse_json(shifts or "{}")
+	move = {cstr(n) for n in frappe.parse_json(move or "[]")}  # employee numbers to bring over from another company
 	result = {"created": 0, "updated": 0, "errors": []}
 	for r in frappe.parse_json(rows):
 		number = cstr(r["employee_number"]).strip()
@@ -165,9 +207,12 @@ def import_employees(rows, company, branch=None, shifts=None):
 			r.get("name") if r.get("name") and frappe.db.exists("Employee", r["name"]) else None
 		)
 		employee = frappe.get_doc("Employee", existing) if existing else frappe.new_doc("Employee")
+		moved_from = None
 		if existing and employee.company != company:
-			result["errors"].append(f"{number}: already used by {existing} in {employee.company}")
-			continue
+			if number not in move:
+				result["errors"].append(f"{number}: already used by {existing} in {employee.company}")
+				continue
+			moved_from = employee.company
 		if r.get("employee_name"):  # one full name: first, middle and last word(s)
 			words = cstr(r["employee_name"]).split()
 			r["first_name"], r["middle_name"], r["last_name"] = (
@@ -187,6 +232,11 @@ def import_employees(rows, company, branch=None, shifts=None):
 			"company_email": cstr(r.get("company_email")).strip().lower() or employee.company_email,
 			"default_shift": shifts.get(cstr(r.get("default_shift")).strip()) or employee.default_shift,
 		})
+		for field in ("gender", "date_of_birth", "cell_number"):
+			if r.get(field):
+				employee.set(field, r[field])
+		if employee.gender and not frappe.db.exists("Gender", employee.gender):
+			employee.gender = None
 		if not existing:
 			employee.employee_number = number
 			if not frappe.db.exists("Employee", {"attendance_device_id": number}):
@@ -203,6 +253,13 @@ def import_employees(rows, company, branch=None, shifts=None):
 			frappe.db.rollback(save_point="group_employee")
 			result["errors"].append(f"{number}: {frappe.utils.strip_html(str(e))[:200]}")
 			continue
+		if moved_from:
+			# their attendance history goes with them
+			frappe.db.sql(
+				"update `tabAttendance` set company=%s, department=%s where employee=%s and company=%s",
+				(company, employee.department, employee.name, moved_from),
+			)
+			result.setdefault("moved", []).append(f"{number} {employee.employee_name} from {moved_from}")
 		result["updated" if existing else "created"] += 1
 	return result
 
